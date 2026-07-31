@@ -1,0 +1,21 @@
+{
+  "name": "modelarc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modelarc — plataforma de arquitectura, proyectos y recorridos 360°",
+  "scripts": {
+    "dev:api": "cd apps/api && php artisan serve --host=127.0.0.1 --port=8000",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:admin": "cd apps/admin && npm run dev",
+    "migrate": "cd apps/api && php artisan migrate",
+    "seed": "cd apps/api && php artisan db:seed",
+    "fresh": "cd apps/api && php artisan migrate:fresh --seed",
+    "build:web": "cd apps/web && npm run build",
+    "build:admin": "cd apps/admin && npm run build",
+    "storage:link": "cd apps/api && php artisan storage:link"
+  },
+  "engines": {
+    "node": ">=22.12",
+    "php": ">=8.3"
+  }
+}

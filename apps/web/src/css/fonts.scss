@@ -1,0 +1,77 @@
+/* Modelarc brand fonts
+ * Principal: Urban Shadow (display / títulos)
+ * Secundaria: Brooklyn (UI / cuerpo) — subset sin acentos ES;
+ *   el fallback (DM Sans / system) cubre áéíñü automáticamente.
+ */
+
+@font-face {
+  font-family: 'Urban Shadow';
+  src: url('/fonts/UrbanShadow-SansSerif.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynNormal1.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynSemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynSemiBoldItalic.otf') format('opentype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynBold1.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynBoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynHeavy1.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brooklyn';
+  src: url('/fonts/BrooklynHeavyItalic.otf') format('opentype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}

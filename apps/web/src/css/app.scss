@@ -1,0 +1,210 @@
+@import './fonts.scss';
+
+:root {
+  --ma-charcoal: #1a1a1a;
+  --ma-charcoal-deep: #111111;
+  --ma-gold: #c4a47c;
+  --ma-gold-dark: #b8956c;
+  --ma-cream: #f7f4f0;
+  --ma-white: #ffffff;
+  --ma-muted: #8a8580;
+  --ma-border: rgba(196, 164, 124, 0.25);
+  /* Principal = display / títulos · Secundaria = UI / cuerpo */
+  --ma-font-primary: 'Urban Shadow', 'Urban Shadow Sans Serif', Georgia, 'Times New Roman', serif;
+  --ma-font-secondary: 'Brooklyn', 'DM Sans', system-ui, sans-serif;
+  --ma-font-serif: var(--ma-font-primary);
+  --ma-font-sans: var(--ma-font-secondary);
+  --ma-container: 1200px;
+  --ma-section-pad: clamp(4.5rem, 8vw, 7.5rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ma-font-sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ma-charcoal);
+  background: var(--ma-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--ma-font-serif);
+  /* Urban Shadow solo tiene Regular: evitar faux-bold */
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.75rem;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.ma-container {
+  width: min(100% - 2.5rem, var(--ma-container));
+  margin-inline: auto;
+}
+
+.ma-section {
+  padding-block: var(--ma-section-pad);
+}
+
+.ma-section--dark {
+  background: var(--ma-charcoal-deep);
+  color: var(--ma-cream);
+}
+
+.ma-section--charcoal {
+  background: var(--ma-charcoal);
+  color: var(--ma-cream);
+}
+
+.ma-section--light {
+  background: var(--ma-white);
+  color: var(--ma-charcoal);
+}
+
+.ma-section--cream {
+  background: var(--ma-cream);
+  color: var(--ma-charcoal);
+}
+
+.ma-eyebrow {
+  display: inline-block;
+  font-family: var(--ma-font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ma-gold);
+  margin-bottom: 1rem;
+}
+
+.ma-heading {
+  font-family: var(--ma-font-serif);
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.ma-heading--lg {
+  font-size: clamp(2.75rem, 6vw, 4.75rem);
+}
+
+.ma-lead {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--ma-muted);
+  max-width: 36rem;
+}
+
+.ma-section--dark .ma-lead,
+.ma-section--charcoal .ma-lead {
+  color: rgba(247, 244, 240, 0.72);
+}
+
+.ma-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.85rem 1.75rem;
+  font-family: var(--ma-font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.ma-btn--gold {
+  background: var(--ma-gold);
+  color: var(--ma-charcoal-deep);
+  border-color: var(--ma-gold);
+}
+
+.ma-btn--gold:hover {
+  background: var(--ma-gold-dark);
+  border-color: var(--ma-gold-dark);
+}
+
+.ma-btn--outline {
+  background: transparent;
+  color: var(--ma-white);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.ma-btn--outline:hover {
+  border-color: var(--ma-gold);
+  color: var(--ma-gold);
+}
+
+.ma-btn--outline-dark {
+  background: transparent;
+  color: var(--ma-charcoal);
+  border-color: var(--ma-charcoal);
+}
+
+.ma-btn--outline-dark:hover {
+  border-color: var(--ma-gold);
+  color: var(--ma-gold);
+}
+
+.ma-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ma-gold);
+  color: var(--ma-charcoal-deep);
+}
+
+.ma-divider {
+  width: 3rem;
+  height: 1px;
+  background: var(--ma-gold);
+  margin: 1.25rem 0;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}

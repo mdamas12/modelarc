@@ -1,0 +1,17 @@
+[Unit]
+Description=Modelarc Laravel Queue Worker
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+WorkingDirectory=/var/www/modelarc/apps/api
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
