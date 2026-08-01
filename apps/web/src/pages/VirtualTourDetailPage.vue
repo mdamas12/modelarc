@@ -18,7 +18,7 @@ watch(slug, load);
 
 <template>
   <q-page class="tour-detail">
-    <div v-if="store.loading" class="tour-detail__status ma-container">Cargando recorrido…</div>
+    <div v-if="store.loading" class="tour-detail__status ma-container">Preparando tu experiencia…</div>
     <div v-else-if="!store.current" class="tour-detail__status ma-container">
       Recorrido no encontrado.
       <router-link to="/recorridos-360" class="ma-btn ma-btn--outline-dark" style="margin-top: 1rem">

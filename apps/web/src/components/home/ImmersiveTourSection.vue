@@ -7,12 +7,11 @@ import { useHomeStore } from '@/stores/homeStore';
 const home = useHomeStore();
 const activeThumb = ref(0);
 const playRequested = ref(false);
+const viewerRef = ref<InstanceType<typeof VirtualTourViewer> | null>(null);
 
 const tour = computed(() => home.featuredTour);
 
-const initialSceneId = computed(
-  () => tour.value?.scenes[activeThumb.value]?.id ?? tour.value?.scenes[0]?.id,
-);
+const initialSceneId = computed(() => tour.value?.scenes[0]?.id ?? '');
 
 onMounted(() => {
   if (!home.loaded) void home.loadHome();
@@ -26,6 +25,15 @@ watch(tour, () => {
 function selectThumb(index: number) {
   activeThumb.value = index;
   playRequested.value = true;
+  const sceneId = tour.value?.scenes[index]?.id;
+  if (sceneId) {
+    void viewerRef.value?.switchScene?.(String(sceneId));
+  }
+}
+
+function onSceneChange(sceneId: string) {
+  const index = tour.value?.scenes.findIndex((s) => String(s.id) === String(sceneId)) ?? -1;
+  if (index >= 0) activeThumb.value = index;
 }
 </script>
 
@@ -59,17 +67,20 @@ function selectThumb(index: number) {
       </div>
 
       <div class="immersive__viewer">
-        <div v-if="home.loading && !tour" class="immersive__status">Cargando recorrido…</div>
+        <div v-if="home.loading && !tour" class="immersive__status">Preparando tu experiencia…</div>
         <div v-else-if="!tour?.scenes?.length" class="immersive__status">
           Aún no hay un recorrido publicado para mostrar.
         </div>
         <VirtualTourViewer
           v-else
+          :key="tour.id"
+          ref="viewerRef"
           :scenes="tour.scenes"
-          :initial-scene-id="initialSceneId ?? tour.scenes[0]?.id ?? ''"
+          :initial-scene-id="initialSceneId"
           :autoplay="playRequested"
           :cover-image="tour.coverImage"
           height="520px"
+          @scene-change="onSceneChange"
         />
       </div>
     </div>

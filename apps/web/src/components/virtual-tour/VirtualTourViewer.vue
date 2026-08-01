@@ -32,83 +32,134 @@ const emit = defineEmits<{
 const rootEl = ref<HTMLElement | null>(null);
 const containerEl = ref<HTMLElement | null>(null);
 const started = ref(false);
-const loading = ref(false);
+const booting = ref(false);
+const switching = ref(false);
 const activeSceneId = ref<string | null>(null);
-const visibleEnough = ref(false);
 
 let viewer: Viewer | null = null;
 let observer: IntersectionObserver | null = null;
 let switchToken = 0;
+let markersPlugin: MarkersPlugin | null = null;
 const preloadedUrls = new Set<string>();
+const httpWarmed = new Set<string>();
 
-const activeScene = computed(
-  () => props.scenes.find((s) => s.id === activeSceneId.value) ?? props.scenes[0] ?? null,
-);
+const activeScene = computed(() => {
+  if (!activeSceneId.value) return props.scenes[0] ?? null;
+  return (
+    props.scenes.find((s) => String(s.id) === String(activeSceneId.value)) ??
+    props.scenes[0] ??
+    null
+  );
+});
 
 function resolveInitialSceneId() {
-  if (props.initialSceneId && props.scenes.some((s) => s.id === props.initialSceneId)) {
-    return props.initialSceneId;
+  if (props.initialSceneId) {
+    const match = props.scenes.find((s) => String(s.id) === String(props.initialSceneId));
+    if (match) return String(match.id);
   }
-  return props.scenes[0]?.id ?? null;
+  return props.scenes[0] ? String(props.scenes[0].id) : null;
+}
+
+function findScene(sceneId: string | number | undefined | null): TourScene | null {
+  if (sceneId == null || sceneId === '') return null;
+  return props.scenes.find((s) => String(s.id) === String(sceneId)) ?? null;
 }
 
 function buildMarkers(scene: TourScene) {
-  return (scene.hotspots ?? []).map((h) => ({
-    id: h.id,
-    position: { yaw: `${h.yaw}deg`, pitch: `${h.pitch}deg` },
-    html: `<div class="ma-hotspot">${h.label}</div>`,
-    anchor: 'bottom center',
-    tooltip: h.label,
-    data: { targetSceneId: h.targetSceneId },
-  }));
+  return (scene.hotspots ?? [])
+    .filter((h) => h.targetSceneId != null && findScene(h.targetSceneId))
+    .map((h) => ({
+      id: `hotspot-${h.id}`,
+      position: { yaw: `${h.yaw}deg`, pitch: `${h.pitch}deg` },
+      html: `<button type="button" class="ma-hotspot" data-target-scene="${String(h.targetSceneId)}">${escapeHtml(h.label)}</button>`,
+      anchor: 'bottom center' as const,
+      tooltip: h.label,
+      data: {
+        targetSceneId: String(h.targetSceneId),
+      },
+    }));
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function warmHttpCache(url: string) {
+  if (!url || httpWarmed.has(url)) return Promise.resolve();
+  httpWarmed.add(url);
+  return new Promise<void>((resolve) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = url;
+  });
 }
 
 async function preloadUrl(url: string) {
-  if (!viewer || !url || preloadedUrls.has(url)) return;
+  if (!url || preloadedUrls.has(url)) return;
+  await warmHttpCache(url);
+  if (!viewer) return;
   try {
     await viewer.textureLoader.preloadPanorama(url);
     preloadedUrls.add(url);
   } catch {
-    // Ignorar fallos de precarga; setPanorama cargará bajo demanda.
+    // La carga bajo demanda sigue disponible.
   }
-}
-
-function collectRelatedUrls(scene: TourScene): string[] {
-  const urls = new Set<string>();
-
-  for (const hotspot of scene.hotspots ?? []) {
-    const target = props.scenes.find((s) => s.id === hotspot.targetSceneId);
-    if (target?.panoramaUrl) urls.add(target.panoramaUrl);
-  }
-
-  const index = props.scenes.findIndex((s) => s.id === scene.id);
-  for (const offset of [-1, 1, 2]) {
-    const neighbor = props.scenes[index + offset];
-    if (neighbor?.panoramaUrl) urls.add(neighbor.panoramaUrl);
-  }
-
-  urls.delete(scene.panoramaUrl);
-  return [...urls];
 }
 
 function preloadRelated(scene: TourScene) {
-  const urls = collectRelatedUrls(scene);
-  // Prioriza destinos de hotspots (primeros en la lista).
-  void Promise.all(urls.map((url) => preloadUrl(url)));
+  const urls: string[] = [];
+  for (const hotspot of scene.hotspots ?? []) {
+    const target = findScene(hotspot.targetSceneId);
+    if (target?.panoramaUrl) urls.push(target.panoramaUrl);
+  }
+  const index = props.scenes.findIndex((s) => String(s.id) === String(scene.id));
+  for (const offset of [-1, 1, 2]) {
+    const neighbor = props.scenes[index + offset];
+    if (neighbor?.panoramaUrl) urls.push(neighbor.panoramaUrl);
+  }
+  // Resto de escenas en segundo plano.
+  for (const s of props.scenes) {
+    if (s.panoramaUrl) urls.push(s.panoramaUrl);
+  }
+  const unique = [...new Set(urls)].filter((u) => u && u !== scene.panoramaUrl);
+  void unique.reduce(async (prev, url) => {
+    await prev;
+    await preloadUrl(url);
+  }, Promise.resolve());
 }
 
-async function applyScene(scene: TourScene) {
+function bindMarkerClicks() {
+  if (!markersPlugin) return;
+  markersPlugin.addEventListener('select-marker', ({ marker }) => {
+    const fromData = marker.data?.targetSceneId;
+    const el = (marker as { domElement?: HTMLElement; config?: { html?: string } }).domElement;
+    const fromDom = el?.querySelector?.('[data-target-scene]')?.getAttribute('data-target-scene');
+    const target = String(fromData ?? fromDom ?? '');
+    if (!target) return;
+    void switchScene(target);
+  });
+}
+
+async function applyScene(scene: TourScene, opts?: { isBoot?: boolean }) {
   if (!viewer) return;
 
   const token = ++switchToken;
-  const alreadyReady = preloadedUrls.has(scene.panoramaUrl);
-  let loadingTimer: number | undefined;
+  const alreadyReady = preloadedUrls.has(scene.panoramaUrl) || httpWarmed.has(scene.panoramaUrl);
+  let subtleTimer: number | undefined;
 
-  // Evita flash del overlay si la escena ya está precargada.
-  if (!alreadyReady) {
-    loadingTimer = window.setTimeout(() => {
-      if (token === switchToken) loading.value = true;
-    }, 100);
+  if (!opts?.isBoot) {
+    // Overlay sutil solo si tarda; nunca tapa todo como un reload.
+    if (!alreadyReady) {
+      subtleTimer = window.setTimeout(() => {
+        if (token === switchToken) switching.value = true;
+      }, 80);
+    }
   }
 
   try {
@@ -117,9 +168,9 @@ async function applyScene(scene: TourScene) {
         yaw: `${scene.yaw ?? 0}deg`,
         pitch: `${scene.pitch ?? 0}deg`,
       },
-      showLoader: !alreadyReady,
+      showLoader: false,
       transition: {
-        speed: alreadyReady ? 380 : 650,
+        speed: alreadyReady ? 320 : 520,
         rotation: true,
         effect: 'fade',
       },
@@ -128,25 +179,37 @@ async function applyScene(scene: TourScene) {
     if (token !== switchToken) return;
 
     preloadedUrls.add(scene.panoramaUrl);
-    const markers = viewer.getPlugin(MarkersPlugin) as MarkersPlugin | undefined;
-    markers?.setMarkers(buildMarkers(scene));
+    markersPlugin?.setMarkers(buildMarkers(scene));
     preloadRelated(scene);
   } finally {
-    if (loadingTimer !== undefined) window.clearTimeout(loadingTimer);
-    if (token === switchToken) loading.value = false;
+    if (subtleTimer !== undefined) window.clearTimeout(subtleTimer);
+    if (token === switchToken) switching.value = false;
   }
 }
 
 async function initViewer() {
   if (viewer || !containerEl.value || !props.scenes.length) return;
 
-  activeSceneId.value = resolveInitialSceneId();
+  const initialId = resolveInitialSceneId();
+  activeSceneId.value = initialId;
   const scene = activeScene.value;
   if (!scene) return;
 
-  loading.value = true;
+  booting.value = true;
   started.value = true;
   await nextTick();
+
+  // Calienta HTTP cache de la primera escena antes de montar PSV.
+  await warmHttpCache(scene.panoramaUrl);
+  // Empieza a calentar destinos de hotspots en paralelo.
+  void Promise.all(
+    (scene.hotspots ?? [])
+      .map((h) => findScene(h.targetSceneId)?.panoramaUrl)
+      .filter((url): url is string => Boolean(url))
+      .map((url) => warmHttpCache(url)),
+  );
+
+  if (!containerEl.value) return;
 
   viewer = new Viewer({
     container: containerEl.value,
@@ -156,10 +219,9 @@ async function initViewer() {
     navbar: false,
     defaultZoomLvl: 50,
     mousewheel: true,
-    // Un dedo en móvil: más usable en recorridos inmersivos.
     touchmoveTwoFingers: false,
     defaultTransition: {
-      speed: 420,
+      speed: 360,
       rotation: true,
       effect: 'fade',
     },
@@ -167,50 +229,67 @@ async function initViewer() {
       [
         MarkersPlugin,
         {
+          clickEventOnMarker: false,
           markers: buildMarkers(scene),
         },
       ],
     ],
   });
 
-  const markers = viewer.getPlugin(MarkersPlugin) as MarkersPlugin | undefined;
-  markers?.addEventListener('select-marker', ({ marker }) => {
-    const target = marker.data?.targetSceneId as string | undefined;
-    if (target) void switchScene(target);
-  });
+  markersPlugin = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
+  bindMarkerClicks();
 
-  viewer.addEventListener('ready', () => {
-    loading.value = false;
-    preloadedUrls.add(scene.panoramaUrl);
-    preloadRelated(scene);
-  });
+  // Evita que clics en hotspots HTML burbujeen fuera del visor.
+  containerEl.value.addEventListener(
+    'click',
+    (event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.ma-hotspot')) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    true,
+  );
 
-  // Fallback si ready ya disparó
+  viewer.addEventListener(
+    'ready',
+    () => {
+      booting.value = false;
+      preloadedUrls.add(scene.panoramaUrl);
+      preloadRelated(scene);
+    },
+    { once: true },
+  );
+
   window.setTimeout(() => {
-    loading.value = false;
+    booting.value = false;
     if (viewer) {
       preloadedUrls.add(scene.panoramaUrl);
       preloadRelated(scene);
     }
-  }, 2500);
+  }, 4000);
 }
 
 async function switchScene(sceneId: string) {
-  if (sceneId === activeSceneId.value) return;
-  const scene = props.scenes.find((s) => s.id === sceneId);
+  const scene = findScene(sceneId);
   if (!scene) return;
+  if (String(scene.id) === String(activeSceneId.value)) return;
 
-  // Empieza a precargar de inmediato al hacer click (aunque aún no esté lista).
-  if (viewer && !preloadedUrls.has(scene.panoramaUrl)) {
-    void preloadUrl(scene.panoramaUrl);
-  }
+  // Mantener el usuario en el visor: solo cambia escena.
+  activeSceneId.value = String(scene.id);
+  emit('scene-change', String(scene.id));
 
-  activeSceneId.value = sceneId;
-  emit('scene-change', sceneId);
   if (!viewer) {
     await initViewer();
     return;
   }
+
+  // Precarga inmediata del destino si aún no está.
+  if (!preloadedUrls.has(scene.panoramaUrl)) {
+    void preloadUrl(scene.panoramaUrl);
+  }
+
   await applyScene(scene);
 }
 
@@ -240,16 +319,20 @@ function onReset() {
 function destroyViewer() {
   switchToken += 1;
   preloadedUrls.clear();
+  markersPlugin = null;
   if (viewer) {
     viewer.destroy();
     viewer = null;
   }
 }
 
+// Solo reacciona a cambios externos de escena inicial (p.ej. thumbs), no remonta el visor.
 watch(
   () => props.initialSceneId,
   (id) => {
-    if (id && started.value) void switchScene(id);
+    if (!id || !started.value || !viewer) return;
+    if (String(id) === String(activeSceneId.value)) return;
+    void switchScene(String(id));
   },
 );
 
@@ -260,28 +343,22 @@ watch(
   },
 );
 
-watch(
-  () => props.scenes,
-  () => {
-    if (started.value && activeScene.value) {
-      void applyScene(activeScene.value);
-    }
-  },
-  { deep: true },
-);
-
 onMounted(() => {
   if (!rootEl.value) return;
   observer = new IntersectionObserver(
     (entries) => {
-      visibleEnough.value = entries.some((e) => e.isIntersecting);
-      if (props.autoplay && visibleEnough.value && !started.value) {
+      if (props.autoplay && entries.some((e) => e.isIntersecting) && !started.value) {
         void start();
       }
     },
     { threshold: 0.35 },
   );
   observer.observe(rootEl.value);
+
+  // Prefetch HTTP de todas las panorámicas apenas el bloque es visible.
+  for (const scene of props.scenes) {
+    if (scene.panoramaUrl) void warmHttpCache(scene.panoramaUrl);
+  }
 
   if (props.autoplay) void start();
 });
@@ -290,6 +367,8 @@ onBeforeUnmount(() => {
   observer?.disconnect();
   destroyViewer();
 });
+
+defineExpose({ switchScene, start });
 </script>
 
 <template>
@@ -302,13 +381,18 @@ onBeforeUnmount(() => {
       :style="coverImage ? { backgroundImage: `url(${coverImage})` } : undefined"
     >
       <div class="tour-viewer__cover-overlay" />
-      <button type="button" class="tour-viewer__play" @click="start">
+      <button type="button" class="tour-viewer__play" @click.stop.prevent="start">
         <span class="tour-viewer__play-icon">▶</span>
         <span>Iniciar recorrido 360°</span>
       </button>
     </div>
 
-    <TourLoadingScreen :visible="started && loading" />
+    <TourLoadingScreen
+      :visible="started && booting"
+      message="Preparando tu experiencia"
+    />
+    <TourLoadingScreen :visible="started && switching && !booting" subtle />
+
     <TourControls v-if="started" @fullscreen="onFullscreen" @reset="onReset" />
 
     <TourSceneSelector
@@ -329,8 +413,8 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(196, 164, 124, 0.28);
   display: flex;
   flex-direction: column;
-  /* Evita que el scroll de la página robe el gesto de un dedo dentro del visor. */
   touch-action: none;
+  isolation: isolate;
 
   &__canvas {
     flex: 1;
@@ -390,6 +474,8 @@ onBeforeUnmount(() => {
   }
 
   :deep(.ma-hotspot) {
+    appearance: none;
+    border: 0;
     padding: 0.4rem 0.7rem;
     background: var(--ma-gold);
     color: var(--ma-charcoal-deep);
@@ -400,11 +486,17 @@ onBeforeUnmount(() => {
     text-transform: uppercase;
     white-space: nowrap;
     cursor: pointer;
+    border-radius: 2px;
+    pointer-events: auto;
   }
 
   :deep(.psv-container) {
     width: 100%;
     height: 100%;
+  }
+
+  :deep(.psv-marker) {
+    cursor: pointer;
   }
 }
 </style>
