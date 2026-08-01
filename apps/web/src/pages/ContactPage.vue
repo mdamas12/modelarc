@@ -90,9 +90,13 @@ async function onSubmit() {
 
         <aside class="contact-aside">
           <h3>Estudio</h3>
-          <p>Santo Domingo, República Dominicana</p>
-          <p><a href="mailto:hola@modelarc.com">hola@modelarc.com</a></p>
-          <p><a href="tel:+18095550100">+1 (809) 555-0100</a></p>
+          <p>Puerto Ordaz, estado Bolívar, Venezuela.</p>
+          <p><a href="mailto:info@modelarcve.com">info@modelarcve.com</a></p>
+          <p>
+            <a href="https://wa.me/584249171058" target="_blank" rel="noopener noreferrer">
+              (+58)-4249171058
+            </a>
+          </p>
           <div class="ma-divider" />
           <p class="contact-aside__note">
             Horario: Lun–Vie 9:00–18:00 · Visitas a obra con cita previa.

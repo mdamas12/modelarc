@@ -8,7 +8,8 @@ import { heroImage } from '@/data/mockData';
     <div class="hero__content ma-container">
       <p class="ma-eyebrow">Arquitectura · Construcción · Remodelación</p>
       <h1 class="hero__title">
-        Diseñamos espacios que<br />transforman tu vida
+        <span class="hero__title-line">Diseñamos espacios</span>
+        <span class="hero__title-line">que transforman tu vida</span>
       </h1>
       <p class="hero__lead">
         Proyectos residenciales y comerciales con identidad, precisión técnica y una experiencia
@@ -64,6 +65,10 @@ import { heroImage } from '@/data/mockData';
     margin: 0 0 1.25rem;
   }
 
+  &__title-line {
+    display: block;
+  }
+
   &__lead {
     font-size: 1.05rem;
     line-height: 1.7;
@@ -103,6 +108,20 @@ import { heroImage } from '@/data/mockData';
 @media (max-width: 700px) {
   .hero__scroll {
     display: none;
+  }
+
+  .hero__title {
+    font-size: clamp(1.85rem, 8.2vw, 2.55rem);
+    line-height: 1.08;
+  }
+
+  .hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .ma-btn {
+      width: 100%;
+    }
   }
 }
 </style>
