@@ -38,6 +38,8 @@ const visibleEnough = ref(false);
 
 let viewer: Viewer | null = null;
 let observer: IntersectionObserver | null = null;
+let switchToken = 0;
+const preloadedUrls = new Set<string>();
 
 const activeScene = computed(
   () => props.scenes.find((s) => s.id === activeSceneId.value) ?? props.scenes[0] ?? null,
@@ -61,21 +63,77 @@ function buildMarkers(scene: TourScene) {
   }));
 }
 
+async function preloadUrl(url: string) {
+  if (!viewer || !url || preloadedUrls.has(url)) return;
+  try {
+    await viewer.textureLoader.preloadPanorama(url);
+    preloadedUrls.add(url);
+  } catch {
+    // Ignorar fallos de precarga; setPanorama cargará bajo demanda.
+  }
+}
+
+function collectRelatedUrls(scene: TourScene): string[] {
+  const urls = new Set<string>();
+
+  for (const hotspot of scene.hotspots ?? []) {
+    const target = props.scenes.find((s) => s.id === hotspot.targetSceneId);
+    if (target?.panoramaUrl) urls.add(target.panoramaUrl);
+  }
+
+  const index = props.scenes.findIndex((s) => s.id === scene.id);
+  for (const offset of [-1, 1, 2]) {
+    const neighbor = props.scenes[index + offset];
+    if (neighbor?.panoramaUrl) urls.add(neighbor.panoramaUrl);
+  }
+
+  urls.delete(scene.panoramaUrl);
+  return [...urls];
+}
+
+function preloadRelated(scene: TourScene) {
+  const urls = collectRelatedUrls(scene);
+  // Prioriza destinos de hotspots (primeros en la lista).
+  void Promise.all(urls.map((url) => preloadUrl(url)));
+}
+
 async function applyScene(scene: TourScene) {
   if (!viewer) return;
-  loading.value = true;
+
+  const token = ++switchToken;
+  const alreadyReady = preloadedUrls.has(scene.panoramaUrl);
+  let loadingTimer: number | undefined;
+
+  // Evita flash del overlay si la escena ya está precargada.
+  if (!alreadyReady) {
+    loadingTimer = window.setTimeout(() => {
+      if (token === switchToken) loading.value = true;
+    }, 100);
+  }
+
   try {
     await viewer.setPanorama(scene.panoramaUrl, {
       position: {
         yaw: `${scene.yaw ?? 0}deg`,
         pitch: `${scene.pitch ?? 0}deg`,
       },
-      transition: true,
+      showLoader: !alreadyReady,
+      transition: {
+        speed: alreadyReady ? 380 : 650,
+        rotation: true,
+        effect: 'fade',
+      },
     });
+
+    if (token !== switchToken) return;
+
+    preloadedUrls.add(scene.panoramaUrl);
     const markers = viewer.getPlugin(MarkersPlugin) as MarkersPlugin | undefined;
     markers?.setMarkers(buildMarkers(scene));
+    preloadRelated(scene);
   } finally {
-    loading.value = false;
+    if (loadingTimer !== undefined) window.clearTimeout(loadingTimer);
+    if (token === switchToken) loading.value = false;
   }
 }
 
@@ -98,7 +156,13 @@ async function initViewer() {
     navbar: false,
     defaultZoomLvl: 50,
     mousewheel: true,
-    touchmoveTwoFingers: true,
+    // Un dedo en móvil: más usable en recorridos inmersivos.
+    touchmoveTwoFingers: false,
+    defaultTransition: {
+      speed: 420,
+      rotation: true,
+      effect: 'fade',
+    },
     plugins: [
       [
         MarkersPlugin,
@@ -117,11 +181,17 @@ async function initViewer() {
 
   viewer.addEventListener('ready', () => {
     loading.value = false;
+    preloadedUrls.add(scene.panoramaUrl);
+    preloadRelated(scene);
   });
 
-  // Fallback if ready already fired
+  // Fallback si ready ya disparó
   window.setTimeout(() => {
     loading.value = false;
+    if (viewer) {
+      preloadedUrls.add(scene.panoramaUrl);
+      preloadRelated(scene);
+    }
   }, 2500);
 }
 
@@ -129,6 +199,12 @@ async function switchScene(sceneId: string) {
   if (sceneId === activeSceneId.value) return;
   const scene = props.scenes.find((s) => s.id === sceneId);
   if (!scene) return;
+
+  // Empieza a precargar de inmediato al hacer click (aunque aún no esté lista).
+  if (viewer && !preloadedUrls.has(scene.panoramaUrl)) {
+    void preloadUrl(scene.panoramaUrl);
+  }
+
   activeSceneId.value = sceneId;
   emit('scene-change', sceneId);
   if (!viewer) {
@@ -162,6 +238,8 @@ function onReset() {
 }
 
 function destroyViewer() {
+  switchToken += 1;
+  preloadedUrls.clear();
   if (viewer) {
     viewer.destroy();
     viewer = null;
@@ -251,6 +329,8 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(196, 164, 124, 0.28);
   display: flex;
   flex-direction: column;
+  /* Evita que el scroll de la página robe el gesto de un dedo dentro del visor. */
+  touch-action: none;
 
   &__canvas {
     flex: 1;
