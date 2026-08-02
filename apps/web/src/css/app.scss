@@ -68,6 +68,14 @@ img {
 .ma-container {
   width: min(100% - 2.5rem, var(--ma-container));
   margin-inline: auto;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  .ma-container {
+    width: min(100% - 2rem, var(--ma-container));
+  }
 }
 
 .ma-section {

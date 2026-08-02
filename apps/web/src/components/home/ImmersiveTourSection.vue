@@ -17,10 +17,13 @@ onMounted(() => {
   if (!home.loaded) void home.loadHome();
 });
 
-watch(tour, () => {
-  activeThumb.value = 0;
-  playRequested.value = false;
-});
+watch(
+  () => tour.value?.id,
+  () => {
+    activeThumb.value = 0;
+    playRequested.value = false;
+  },
+);
 
 function selectThumb(index: number) {
   activeThumb.value = index;
@@ -67,7 +70,7 @@ function onSceneChange(sceneId: string) {
       </div>
 
       <div class="immersive__viewer">
-        <div v-if="home.loading && !tour" class="immersive__status">Preparando tu experiencia…</div>
+        <div v-if="home.loading && !tour" class="immersive__status">Preparando Experiencia…</div>
         <div v-else-if="!tour?.scenes?.length" class="immersive__status">
           Aún no hay un recorrido publicado para mostrar.
         </div>
@@ -89,20 +92,36 @@ function onSceneChange(sceneId: string) {
 
 <style scoped lang="scss">
 .immersive {
+  overflow-x: clip;
+
   &__grid {
     display: grid;
     grid-template-columns: 0.9fr 1.1fr;
     gap: 3rem;
     align-items: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  &__copy,
+  &__viewer {
+    min-width: 0;
+    max-width: 100%;
   }
 
   &__thumbs {
     display: flex;
     gap: 0.65rem;
     margin: 0 0 1.75rem;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   &__thumb {
+    flex: 0 0 auto;
     width: 4.5rem;
     height: 4.5rem;
     border: 1px solid transparent;
@@ -118,6 +137,7 @@ function onSceneChange(sceneId: string) {
 
   &__viewer {
     min-height: 520px;
+    width: 100%;
   }
 
   &__status {
@@ -133,8 +153,19 @@ function onSceneChange(sceneId: string) {
 }
 
 @media (max-width: 960px) {
-  .immersive__grid {
-    grid-template-columns: 1fr;
+  .immersive {
+    &__grid {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+
+    &__viewer {
+      min-height: 360px;
+    }
+
+    &__status {
+      min-height: 360px;
+    }
   }
 }
 </style>

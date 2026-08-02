@@ -37,9 +37,12 @@ const emit = defineEmits<{
   display: flex;
   gap: 0.65rem;
   overflow-x: auto;
+  max-width: 100%;
   padding: 0.5rem;
   background: rgba(17, 17, 17, 0.85);
   border-top: 1px solid rgba(196, 164, 124, 0.25);
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 
   &__item {
     flex: 0 0 auto;

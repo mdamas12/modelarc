@@ -71,7 +71,7 @@ function buildMarkers(scene: TourScene) {
     .map((h) => ({
       id: `hotspot-${h.id}`,
       position: { yaw: `${h.yaw}deg`, pitch: `${h.pitch}deg` },
-      html: `<button type="button" class="ma-hotspot" data-target-scene="${String(h.targetSceneId)}">${escapeHtml(h.label)}</button>`,
+      html: `<div class="ma-hotspot" data-target-scene="${String(h.targetSceneId)}" role="button" tabindex="0">${escapeHtml(h.label)}</div>`,
       anchor: 'bottom center' as const,
       tooltip: h.label,
       data: {
@@ -136,14 +136,30 @@ function preloadRelated(scene: TourScene) {
 
 function bindMarkerClicks() {
   if (!markersPlugin) return;
-  markersPlugin.addEventListener('select-marker', ({ marker }) => {
-    const fromData = marker.data?.targetSceneId;
-    const el = (marker as { domElement?: HTMLElement; config?: { html?: string } }).domElement;
-    const fromDom = el?.querySelector?.('[data-target-scene]')?.getAttribute('data-target-scene');
+  markersPlugin.addEventListener('select-marker', (event) => {
+    const marker = event.marker;
+    const fromData = marker?.data?.targetSceneId;
+    const el = marker?.domElement as HTMLElement | undefined;
+    const fromDom =
+      el?.getAttribute?.('data-target-scene') ||
+      el?.querySelector?.('[data-target-scene]')?.getAttribute('data-target-scene');
     const target = String(fromData ?? fromDom ?? '');
     if (!target) return;
     void switchScene(target);
   });
+}
+
+function onContainerPointer(event: Event) {
+  const el = (event.target as HTMLElement | null)?.closest?.('[data-target-scene]') as
+    | HTMLElement
+    | null;
+  if (!el) return;
+  const target = el.getAttribute('data-target-scene');
+  if (!target) return;
+  // No dejar que el gesto escape al layout (enlaces / scroll de página).
+  event.preventDefault();
+  event.stopPropagation();
+  void switchScene(target);
 }
 
 async function applyScene(scene: TourScene, opts?: { isBoot?: boolean }) {
@@ -220,6 +236,12 @@ async function initViewer() {
     defaultZoomLvl: 50,
     mousewheel: true,
     touchmoveTwoFingers: false,
+    loadingTxt: 'Preparando Experiencia',
+    lang: {
+      loading: 'Preparando Experiencia',
+      twoFingers: 'Desliza para navegar',
+      loadError: 'No se pudo cargar la escena',
+    },
     defaultTransition: {
       speed: 360,
       rotation: true,
@@ -239,18 +261,8 @@ async function initViewer() {
   markersPlugin = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
   bindMarkerClicks();
 
-  // Evita que clics en hotspots HTML burbujeen fuera del visor.
-  containerEl.value.addEventListener(
-    'click',
-    (event) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('.ma-hotspot')) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    },
-    true,
-  );
+  // Delegación en bubble: cambia escena sin romper el click de PSV.
+  containerEl.value.addEventListener('click', onContainerPointer);
 
   viewer.addEventListener(
     'ready',
@@ -389,7 +401,7 @@ defineExpose({ switchScene, start });
 
     <TourLoadingScreen
       :visible="started && booting"
-      message="Preparando tu experiencia"
+      message="Preparando Experiencia"
     />
     <TourLoadingScreen :visible="started && switching && !booting" subtle />
 
@@ -408,6 +420,8 @@ defineExpose({ switchScene, start });
 .tour-viewer {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: var(--ma-charcoal-deep);
   overflow: hidden;
   border: 1px solid rgba(196, 164, 124, 0.28);
@@ -420,6 +434,7 @@ defineExpose({ switchScene, start });
     flex: 1;
     min-height: 0;
     width: 100%;
+    max-width: 100%;
   }
 
   &__cover {
@@ -474,7 +489,7 @@ defineExpose({ switchScene, start });
   }
 
   :deep(.ma-hotspot) {
-    appearance: none;
+    display: inline-block;
     border: 0;
     padding: 0.4rem 0.7rem;
     background: var(--ma-gold);
@@ -488,6 +503,8 @@ defineExpose({ switchScene, start });
     cursor: pointer;
     border-radius: 2px;
     pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   :deep(.psv-container) {
@@ -497,6 +514,21 @@ defineExpose({ switchScene, start });
 
   :deep(.psv-marker) {
     cursor: pointer;
+  }
+
+  /* Oculta el texto nativo "Loading..." de PSV; usamos nuestro overlay. */
+  :deep(.psv-loader-text),
+  :deep(.psv-loader .psv-loader-text) {
+    font-size: 0 !important;
+    color: transparent !important;
+  }
+
+  :deep(.psv-loader-text::after) {
+    content: 'Preparando Experiencia';
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ma-cream);
   }
 }
 </style>

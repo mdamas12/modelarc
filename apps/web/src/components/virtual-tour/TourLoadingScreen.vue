@@ -7,7 +7,7 @@ withDefaults(
   }>(),
   {
     visible: false,
-    message: 'Preparando tu experiencia',
+    message: 'Preparando Experiencia',
     subtle: false,
   },
 );
