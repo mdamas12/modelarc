@@ -26,10 +26,14 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: clip;
   font-family: var(--ma-font-sans);
   font-weight: 400;
   font-size: 1rem;
@@ -66,15 +70,16 @@ img {
 }
 
 .ma-container {
-  width: min(100% - 2.5rem, var(--ma-container));
+  width: 100%;
+  max-width: var(--ma-container);
   margin-inline: auto;
+  padding-inline: 1.25rem;
   box-sizing: border-box;
-  max-width: 100%;
 }
 
 @media (max-width: 700px) {
   .ma-container {
-    width: min(100% - 2rem, var(--ma-container));
+    padding-inline: 1rem;
   }
 }
 

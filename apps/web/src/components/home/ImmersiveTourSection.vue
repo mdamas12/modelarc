@@ -93,6 +93,8 @@ function onSceneChange(sceneId: string) {
 <style scoped lang="scss">
 .immersive {
   overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
 
   &__grid {
     display: grid;
@@ -109,6 +111,7 @@ function onSceneChange(sceneId: string) {
   &__viewer {
     min-width: 0;
     max-width: 100%;
+    overflow: hidden;
   }
 
   &__thumbs {
@@ -118,6 +121,8 @@ function onSceneChange(sceneId: string) {
     max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    padding-bottom: 0.15rem;
   }
 
   &__thumb {

@@ -71,7 +71,7 @@ function buildMarkers(scene: TourScene) {
     .map((h) => ({
       id: `hotspot-${h.id}`,
       position: { yaw: `${h.yaw}deg`, pitch: `${h.pitch}deg` },
-      html: `<div class="ma-hotspot" data-target-scene="${String(h.targetSceneId)}" role="button" tabindex="0">${escapeHtml(h.label)}</div>`,
+      html: `<div class="ma-hotspot" data-target-scene="${String(h.targetSceneId)}" role="button">${escapeHtml(h.label)}</div>`,
       anchor: 'bottom center' as const,
       tooltip: h.label,
       data: {
@@ -145,21 +145,38 @@ function bindMarkerClicks() {
       el?.querySelector?.('[data-target-scene]')?.getAttribute('data-target-scene');
     const target = String(fromData ?? fromDom ?? '');
     if (!target) return;
-    void switchScene(target);
+    const scrollY = window.scrollY;
+    void switchScene(target).finally(() => {
+      if (Math.abs(window.scrollY - scrollY) > 2) {
+        window.scrollTo(0, scrollY);
+      }
+    });
   });
 }
 
-function onContainerPointer(event: Event) {
+function resolveHotspotTarget(event: Event): string | null {
   const el = (event.target as HTMLElement | null)?.closest?.('[data-target-scene]') as
     | HTMLElement
     | null;
-  if (!el) return;
-  const target = el.getAttribute('data-target-scene');
+  if (!el) return null;
+  return el.getAttribute('data-target-scene');
+}
+
+function onContainerPointer(event: Event) {
+  const target = resolveHotspotTarget(event);
   if (!target) return;
-  // No dejar que el gesto escape al layout (enlaces / scroll de página).
+  // Evita que el gesto haga scroll/jump al layout o active enlaces padres.
   event.preventDefault();
   event.stopPropagation();
-  void switchScene(target);
+  if (typeof (event as Event & { stopImmediatePropagation?: () => void }).stopImmediatePropagation === 'function') {
+    (event as Event & { stopImmediatePropagation: () => void }).stopImmediatePropagation();
+  }
+  const scrollY = window.scrollY;
+  void switchScene(target).finally(() => {
+    if (Math.abs(window.scrollY - scrollY) > 2) {
+      window.scrollTo(0, scrollY);
+    }
+  });
 }
 
 async function applyScene(scene: TourScene, opts?: { isBoot?: boolean }) {
@@ -251,18 +268,23 @@ async function initViewer() {
       [
         MarkersPlugin,
         {
-          clickEventOnMarker: false,
+          clickEventOnMarker: true,
           markers: buildMarkers(scene),
         },
       ],
     ],
   });
 
+  // Fuerza el copy por si PSV mezcla defaults en inglés.
+  viewer.config.loadingTxt = 'Preparando Experiencia';
+  viewer.config.lang.loading = 'Preparando Experiencia';
+
   markersPlugin = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
   bindMarkerClicks();
 
-  // Delegación en bubble: cambia escena sin romper el click de PSV.
-  containerEl.value.addEventListener('click', onContainerPointer);
+  // pointerdown + click: captura hotspots en móvil sin dejar que el gesto suba al layout.
+  containerEl.value.addEventListener('pointerdown', onContainerPointer, { capture: true });
+  containerEl.value.addEventListener('click', onContainerPointer, { capture: true });
 
   viewer.addEventListener(
     'ready',
@@ -332,6 +354,10 @@ function destroyViewer() {
   switchToken += 1;
   preloadedUrls.clear();
   markersPlugin = null;
+  if (containerEl.value) {
+    containerEl.value.removeEventListener('pointerdown', onContainerPointer, true);
+    containerEl.value.removeEventListener('click', onContainerPointer, true);
+  }
   if (viewer) {
     viewer.destroy();
     viewer = null;
@@ -516,7 +542,13 @@ defineExpose({ switchScene, start });
     cursor: pointer;
   }
 
-  /* Oculta el texto nativo "Loading..." de PSV; usamos nuestro overlay. */
+  /* Oculta el loader nativo de PSV (z-index 80 + "Loading..."); usamos TourLoadingScreen. */
+  :deep(.psv-loader-container) {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   :deep(.psv-loader-text),
   :deep(.psv-loader .psv-loader-text) {
     font-size: 0 !important;
