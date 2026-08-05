@@ -1,6 +1,7 @@
 import { api } from '@/boot/axios'
 import type {
   DashboardData,
+  GalleryChange,
   Lead,
   MediaItem,
   Paginated,
@@ -58,6 +59,44 @@ export const adminApi = {
   async archiveProject(id: number | string) {
     const { data } = await api.post(`/admin/projects/${id}/archive`)
     return unwrapData<Project>(data)
+  },
+
+  async reorderProjects(ids: number[]) {
+    const { data } = await api.post('/admin/projects/reorder', { ids })
+    return unwrapData<{ message: string }>(data)
+  },
+
+  async moveProject(id: number | string, direction: 'up' | 'down') {
+    const { data } = await api.post(`/admin/projects/${id}/move`, { direction })
+    return unwrapData<Project>(data)
+  },
+
+  async galleryChanges(projectId: number | string) {
+    const { data } = await api.get(`/admin/projects/${projectId}/gallery-changes`)
+    return unwrapData<GalleryChange[]>(data)
+  },
+
+  async createGalleryChange(projectId: number | string, payload: Record<string, unknown>) {
+    const { data } = await api.post(`/admin/projects/${projectId}/gallery-changes`, payload)
+    return unwrapData<GalleryChange>(data)
+  },
+
+  async updateGalleryChange(
+    projectId: number | string,
+    id: number | string,
+    payload: Record<string, unknown>,
+  ) {
+    const { data } = await api.put(`/admin/projects/${projectId}/gallery-changes/${id}`, payload)
+    return unwrapData<GalleryChange>(data)
+  },
+
+  async deleteGalleryChange(projectId: number | string, id: number | string) {
+    await api.delete(`/admin/projects/${projectId}/gallery-changes/${id}`)
+  },
+
+  async reorderGalleryChanges(projectId: number | string, ids: number[]) {
+    const { data } = await api.post(`/admin/projects/${projectId}/gallery-changes/reorder`, { ids })
+    return unwrapData<{ message: string }>(data)
   },
 
   async media(params?: Record<string, unknown>) {

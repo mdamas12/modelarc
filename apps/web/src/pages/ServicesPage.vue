@@ -32,7 +32,7 @@ onMounted(async () => {
     <section class="page-hero ma-section ma-section--dark">
       <div class="ma-container">
         <SectionHeader
-          eyebrow="Expertise"
+          eyebrow="Expertos"
           title="Nuestros servicios"
           lead="Diseño, construcción y remodelación con un estándar de lujo contemporáneo."
           dark
@@ -57,13 +57,14 @@ onMounted(async () => {
           <div class="services-list__copy">
             <p class="ma-eyebrow">0{{ i + 1 }}</p>
             <h2 class="ma-heading" style="font-size: 2.4rem">{{ service.title }}</h2>
+            <p v-if="service.summary" class="services-list__summary">{{ service.summary }}</p>
             <div class="ma-divider" />
-            <p>{{ service.description }}</p>
-            <p class="services-list__extra">
-              Cada encargo se aborda con un equipo dedicado, control de calidad y una comunicación
-              clara en todas las etapas del proyecto.
+            <p v-if="service.description" class="services-list__description">
+              {{ service.description }}
             </p>
-            <router-link to="/contacto" class="ma-btn ma-btn--outline-dark">Consultar</router-link>
+            <router-link to="/contacto" class="ma-btn ma-btn--outline-dark">
+              Solicitar Presupuesto
+            </router-link>
           </div>
         </article>
       </div>
@@ -118,8 +119,19 @@ onMounted(async () => {
     }
   }
 
-  &__extra {
-    margin: 1.25rem 0 1.75rem;
+  &__summary {
+    margin: 0.85rem 0 0;
+    font-size: 1.05rem;
+    color: #8a7a68 !important;
+    line-height: 1.55;
+  }
+
+  &__description {
+    margin: 0 0 1.75rem;
+  }
+
+  .ma-divider {
+    margin: 1.1rem 0 1.25rem;
   }
 }
 

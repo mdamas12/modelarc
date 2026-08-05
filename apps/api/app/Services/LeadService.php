@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\SendContactLeadMailJob;
 use App\Models\ActivityLog;
 use App\Models\Lead;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class LeadService
 {
@@ -24,7 +27,21 @@ class LeadService
             'subject_id' => $lead->id,
         ]);
 
+        $this->notifyTeam($lead);
+
         return $lead;
+    }
+
+    protected function notifyTeam(Lead $lead): void
+    {
+        try {
+            SendContactLeadMailJob::dispatch($lead->id);
+        } catch (Throwable $e) {
+            Log::error('No se pudo encolar el email de nueva solicitud de contacto', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator

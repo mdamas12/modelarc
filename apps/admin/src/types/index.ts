@@ -27,6 +27,29 @@ export interface MediaItem {
   created_at?: string
 }
 
+export interface GalleryChange {
+  id: number
+  project_id: number
+  before_media_id: number
+  design_media_id?: number | null
+  after_media_id?: number | null
+  compare_with: 'design' | 'after'
+  compare_label?: string
+  subcategory?: string | null
+  title?: string | null
+  description?: string | null
+  sort_order?: number
+  is_featured?: boolean
+  before_media?: MediaItem | null
+  design_media?: MediaItem | null
+  after_media?: MediaItem | null
+  comparison_media?: MediaItem | null
+  comparison_image_url?: string | null
+  before_image_url?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
 export interface Project {
   id: number
   title: string
@@ -41,6 +64,7 @@ export interface Project {
   duration?: string | null
   client_name?: string | null
   is_featured?: boolean
+  sort_order?: number
   has_virtual_tour?: boolean
   publication_status?: string
   published_at?: string | null
@@ -49,6 +73,7 @@ export interface Project {
   views_count?: number
   cover_media?: MediaItem | null
   project_media?: ProjectMedia[]
+  gallery_changes?: GalleryChange[]
   virtual_tour?: VirtualTour | null
   created_at?: string
   updated_at?: string

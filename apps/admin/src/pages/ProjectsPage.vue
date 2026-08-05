@@ -3,7 +3,9 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Proyectos</h1>
-        <p class="page-subtitle">Gestiona el portafolio de proyectos</p>
+        <p class="page-subtitle">
+          Gestiona el portafolio. Usa las flechas para definir el orden en la web.
+        </p>
       </div>
       <q-btn color="primary" unelevated no-caps icon="add" label="Nuevo proyecto" to="/proyectos/nuevo" />
     </div>
@@ -80,6 +82,12 @@
               <span v-if="project.year"> · {{ project.year }}</span>
             </p>
           </div>
+          <q-badge class="project-card__order" color="dark" :label="`#${(project.sort_order ?? 0) + 1}`" />
+          <q-badge
+            class="project-card__status"
+            :color="statusColor(project.publication_status)"
+            :label="labelStatus(project.publication_status)"
+          />
           <q-badge
             v-if="project.is_featured"
             class="project-card__badge"
@@ -89,6 +97,34 @@
         </div>
 
         <div class="project-card__actions">
+          <div class="project-card__order-btns">
+            <q-btn
+              flat
+              dense
+              round
+              icon="arrow_upward"
+              :disable="filtersActive || !canMoveUp(project)"
+              :loading="movingId === project.id"
+              @click="move(project, 'up')"
+            >
+              <q-tooltip>
+                {{ filtersActive ? 'Quita los filtros para reordenar' : 'Subir en la web' }}
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              flat
+              dense
+              round
+              icon="arrow_downward"
+              :disable="filtersActive || !canMoveDown(project)"
+              :loading="movingId === project.id"
+              @click="move(project, 'down')"
+            >
+              <q-tooltip>
+                {{ filtersActive ? 'Quita los filtros para reordenar' : 'Bajar en la web' }}
+              </q-tooltip>
+            </q-btn>
+          </div>
           <q-btn
             unelevated
             no-caps
@@ -96,8 +132,32 @@
             color="primary"
             class="project-card__btn"
             icon="visibility"
-            label="Ver detalle"
+            label="Editar"
             :to="`/proyectos/${project.id}`"
+          />
+          <q-btn
+            v-if="project.publication_status !== 'published'"
+            unelevated
+            no-caps
+            dense
+            color="positive"
+            class="project-card__btn"
+            icon="publish"
+            label="Publicar"
+            :loading="busyId === project.id"
+            @click="publish(project)"
+          />
+          <q-btn
+            v-else
+            outline
+            no-caps
+            dense
+            color="grey-8"
+            class="project-card__btn"
+            icon="inventory_2"
+            label="Archivar"
+            :loading="busyId === project.id"
+            @click="archive(project)"
           />
           <q-btn
             outline
@@ -106,9 +166,11 @@
             color="negative"
             class="project-card__btn project-card__btn--danger"
             icon="delete"
-            label="Eliminar"
+            aria-label="Eliminar"
             @click="remove(project.id)"
-          />
+          >
+            <q-tooltip>Eliminar</q-tooltip>
+          </q-btn>
         </div>
       </article>
     </div>
@@ -127,13 +189,15 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { adminApi } from '@/services/adminApi'
 import type { Project } from '@/types'
 
 const $q = useQuasar()
 const loading = ref(false)
+const busyId = ref<number | null>(null)
+const movingId = ref<number | null>(null)
 const rows = ref<Project[]>([])
 const placeholder =
   'https://placehold.co/800x600/1a1a1a/c4a47c?text=Sin+imagen'
@@ -146,9 +210,13 @@ const filters = reactive({
 
 const pagination = ref({
   page: 1,
-  rowsPerPage: 12,
+  rowsPerPage: 50,
   rowsNumber: 0,
 })
+
+const filtersActive = computed(
+  () => Boolean(filters.search || filters.publication_status || filters.category),
+)
 
 const statusOptions = [
   { label: 'Borrador', value: 'draft' },
@@ -174,6 +242,33 @@ function labelStatus(value?: string) {
   return statusOptions.find((o) => o.value === value)?.label || value || '—'
 }
 
+function statusColor(value?: string) {
+  if (value === 'published') return 'positive'
+  if (value === 'archived') return 'grey-7'
+  return 'warning'
+}
+
+function canMoveUp(project: Project) {
+  return (project.sort_order ?? 0) > 0
+}
+
+function canMoveDown(project: Project) {
+  const maxIndex = Math.max(0, pagination.value.rowsNumber - 1)
+  return (project.sort_order ?? 0) < maxIndex
+}
+
+async function move(project: Project, direction: 'up' | 'down') {
+  movingId.value = project.id
+  try {
+    await adminApi.moveProject(project.id, direction)
+    await load()
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo cambiar el orden' })
+  } finally {
+    movingId.value = null
+  }
+}
+
 async function load() {
   loading.value = true
   try {
@@ -192,6 +287,48 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+async function publish(project: Project) {
+  $q.dialog({
+    title: 'Publicar proyecto',
+    message: `¿Publicar “${project.title}” en el sitio web?`,
+    cancel: { flat: true, noCaps: true, label: 'Cancelar' },
+    ok: { unelevated: true, color: 'positive', noCaps: true, label: 'Publicar' },
+    persistent: true,
+  }).onOk(async () => {
+    busyId.value = project.id
+    try {
+      await adminApi.publishProject(project.id)
+      $q.notify({ type: 'positive', message: 'Proyecto publicado' })
+      await load()
+    } catch {
+      $q.notify({ type: 'negative', message: 'No se pudo publicar el proyecto' })
+    } finally {
+      busyId.value = null
+    }
+  })
+}
+
+async function archive(project: Project) {
+  $q.dialog({
+    title: 'Archivar proyecto',
+    message: `¿Archivar “${project.title}”? Dejará de mostrarse en el sitio.`,
+    cancel: { flat: true, noCaps: true, label: 'Cancelar' },
+    ok: { unelevated: true, color: 'grey-8', noCaps: true, label: 'Archivar' },
+    persistent: true,
+  }).onOk(async () => {
+    busyId.value = project.id
+    try {
+      await adminApi.archiveProject(project.id)
+      $q.notify({ type: 'positive', message: 'Proyecto archivado' })
+      await load()
+    } catch {
+      $q.notify({ type: 'negative', message: 'No se pudo archivar el proyecto' })
+    } finally {
+      busyId.value = null
+    }
+  })
 }
 
 async function remove(id: number) {
@@ -264,29 +401,52 @@ onMounted(load)
   line-height: 1.4;
 }
 
-.project-card__badge {
+.project-card__order {
   position: absolute;
   top: 10px;
   left: 10px;
+}
+
+.project-card__badge {
+  position: absolute;
+  top: 38px;
+  left: 10px;
+}
+
+.project-card__status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  text-transform: none;
 }
 
 .project-card__actions {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   padding: 0.75rem 0.85rem 0.9rem;
+}
+
+.project-card__order-btns {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  margin-right: 0.15rem;
 }
 
 .project-card__btn {
   flex: 1;
-  min-height: 32px;
-  font-size: 0.75rem;
+  min-height: 34px;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .project-card__btn--danger {
+  flex: 0 0 auto;
+  min-width: 40px;
+  padding: 0 0.45rem;
   border-color: rgba(193, 0, 21, 0.35);
 }
 

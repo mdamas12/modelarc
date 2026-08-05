@@ -75,7 +75,10 @@ class Media extends Model
         // Photo Sphere Viewer fetches panoramas with fetch()/WebGL and
         // cannot use /storage/* static files from another origin.
         if (in_array($this->disk, ['public', 'local'], true)) {
-            return url('/api/public/media/'.$this->uuid);
+            // Bust browser cache when web/thumb variants replace the heavy original payload.
+            $version = is_array($this->variants) && ! empty($this->variants['web']['path']) ? 'w1' : 'o1';
+
+            return url('/api/public/media/'.$this->uuid.'?v='.$version);
         }
 
         return Storage::disk($this->disk)->url($this->path);

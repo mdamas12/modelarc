@@ -13,7 +13,7 @@
       <div class="drawer-inner column full-height">
         <div class="drawer-brand">
           <img
-            src="/brand/logo.svg?v=3"
+            src="/brand/logo.svg?v=4"
             alt="Modelarc"
             class="drawer-logo-img"
           />
@@ -192,7 +192,7 @@ onMounted(() => {
 
 .admin-drawer .drawer-logo-img {
   display: block;
-  height: 56px;
+  height: 40px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -208,7 +208,7 @@ onMounted(() => {
   }
 
   .admin-drawer .drawer-logo-img {
-    height: 44px;
+    height: 34px;
   }
 }
 

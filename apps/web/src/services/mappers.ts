@@ -1,4 +1,5 @@
 import type {
+  BeforeAfterItem,
   Project,
   ServiceItem,
   Testimonial,
@@ -22,6 +23,13 @@ function mediaUrl(media: unknown): string | undefined {
   return typeof url === 'string' && url.length > 0 ? url : undefined;
 }
 
+function mediaThumbUrl(media: unknown): string | undefined {
+  if (!media || typeof media !== 'object') return undefined;
+  const thumb = (media as { thumbnail_url?: unknown }).thumbnail_url;
+  if (typeof thumb === 'string' && thumb.length > 0) return thumb;
+  return mediaUrl(media);
+}
+
 function titleCase(value: string | null | undefined): string {
   if (!value) return '';
   return value
@@ -39,15 +47,63 @@ function unwrapData<T>(payload: unknown): T {
   return payload as T;
 }
 
+function mapGalleryChange(raw: Record<string, unknown>): BeforeAfterItem | null {
+  const before =
+    (typeof raw.before_image_url === 'string' && raw.before_image_url) ||
+    mediaUrl(raw.before_media);
+  const after =
+    (typeof raw.comparison_image_url === 'string' && raw.comparison_image_url) ||
+    mediaUrl(raw.comparison_media) ||
+    (raw.compare_with === 'design' ? mediaUrl(raw.design_media) : mediaUrl(raw.after_media)) ||
+    mediaUrl(raw.after_media) ||
+    mediaUrl(raw.design_media);
+
+  if (!before || !after) return null;
+
+  const compareLabel =
+    typeof raw.compare_label === 'string' && raw.compare_label
+      ? raw.compare_label
+      : raw.compare_with === 'design'
+        ? 'Diseño'
+        : 'Después';
+
+  const subcategory = raw.subcategory ? titleCase(String(raw.subcategory)) : undefined;
+  const title =
+    (typeof raw.title === 'string' && raw.title.trim()) || subcategory || undefined;
+
+  return {
+    id: String(raw.id),
+    beforeImage: before,
+    afterImage: after,
+    beforeLabel: 'Antes',
+    afterLabel: compareLabel,
+    title,
+    description: typeof raw.description === 'string' ? raw.description : undefined,
+    subcategory,
+  };
+}
+
 export function mapProject(raw: Record<string, unknown>): Project {
   const cover = mediaUrl(raw.cover_media) ?? PLACEHOLDER_COVER;
   const projectMedia = Array.isArray(raw.project_media) ? raw.project_media : [];
   const gallery = projectMedia
     .map((item) => {
       if (!item || typeof item !== 'object') return undefined;
-      return mediaUrl((item as { media?: unknown }).media);
+      const row = item as { type?: string; media?: unknown };
+      // Keep legacy before/after pivot rows out of the main gallery grid.
+      if (row.type === 'before' || row.type === 'after') return undefined;
+      return mediaUrl(row.media);
     })
     .filter((url): url is string => Boolean(url));
+
+  const galleryChanges = Array.isArray(raw.gallery_changes) ? raw.gallery_changes : [];
+  const beforeAfterItems = galleryChanges
+    .map((item) =>
+      item && typeof item === 'object'
+        ? mapGalleryChange(item as Record<string, unknown>)
+        : null,
+    )
+    .filter((item): item is BeforeAfterItem => Boolean(item));
 
   const virtualTour = raw.virtual_tour as Record<string, unknown> | null | undefined;
   const projectType = raw.project_type as { name?: string } | null | undefined;
@@ -65,7 +121,13 @@ export function mapProject(raw: Record<string, unknown>): Project {
     longDescription: String(raw.description ?? raw.summary ?? ''),
     hasVirtualTour: Boolean(raw.has_virtual_tour),
     isFeatured: Boolean(raw.is_featured),
+    beforeAfterItems,
   };
+
+  if (beforeAfterItems[0]) {
+    project.beforeImage = beforeAfterItems[0].beforeImage;
+    project.afterImage = beforeAfterItems[0].afterImage;
+  }
 
   if (virtualTour?.slug) project.tourSlug = String(virtualTour.slug);
   if (raw.area) project.area = String(raw.area);
@@ -87,8 +149,11 @@ export function mapHotspot(raw: Record<string, unknown>): TourHotspot {
 
 export function mapScene(raw: Record<string, unknown>): TourScene & { sortOrder?: number } {
   const panoramaUrl = mediaUrl(raw.panorama_media) ?? '';
+  // Nunca usar el panorama completo (30–40 MB) como miniatura: tumba móvil/Safari.
   const thumbnailUrl =
-    mediaUrl(raw.thumbnail_media) ?? (panoramaUrl || PLACEHOLDER_COVER);
+    mediaUrl(raw.thumbnail_media) ??
+    mediaThumbUrl(raw.panorama_media) ??
+    PLACEHOLDER_COVER;
   const hotspots = Array.isArray(raw.hotspots)
     ? raw.hotspots.map((item) => mapHotspot(item as Record<string, unknown>))
     : [];
@@ -141,10 +206,13 @@ export function mapTour(
 }
 
 export function mapService(raw: Record<string, unknown>, index = 0): ServiceItem {
+  const summary = String(raw.summary ?? '');
+  const description = String(raw.description ?? '');
   const service: ServiceItem = {
     id: String(raw.id ?? raw.slug ?? index),
     title: String(raw.name ?? ''),
-    description: String(raw.summary ?? raw.description ?? ''),
+    summary: summary || description,
+    description: description || summary,
     image: mediaUrl(raw.image) ?? SERVICE_FALLBACK_IMAGES[index % SERVICE_FALLBACK_IMAGES.length]!,
   };
   if (raw.icon) service.icon = String(raw.icon);

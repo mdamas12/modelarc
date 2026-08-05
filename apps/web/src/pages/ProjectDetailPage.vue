@@ -85,15 +85,25 @@ watch(slug, load);
       </section>
 
       <section
-        v-if="store.current.beforeImage && store.current.afterImage"
+        v-if="store.current.beforeAfterItems?.length"
         class="ma-section ma-section--light"
       >
-        <div class="ma-container" style="max-width: 900px">
-          <h2 class="ma-heading" style="font-size: 2rem; margin-bottom: 1.5rem">Antes / Después</h2>
-          <BeforeAfterSlider
-            :before-image="store.current.beforeImage"
-            :after-image="store.current.afterImage"
-          />
+        <div class="ma-container">
+          <h2 class="ma-heading" style="font-size: 2rem; margin-bottom: 1.5rem">
+            Antes / Después
+          </h2>
+          <div class="project-detail__ba-grid">
+            <BeforeAfterSlider
+              v-for="item in store.current.beforeAfterItems"
+              :key="item.id"
+              :before-image="item.beforeImage"
+              :after-image="item.afterImage"
+              :before-label="item.beforeLabel"
+              :after-label="item.afterLabel"
+              :title="item.title"
+              :description="item.description"
+            />
+          </div>
         </div>
       </section>
 
@@ -217,10 +227,17 @@ watch(slug, load);
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
+
+  &__ba-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+  }
 }
 
 @media (max-width: 1100px) {
-  .project-detail__related {
+  .project-detail__related,
+  .project-detail__ba-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -229,7 +246,8 @@ watch(slug, load);
   .project-detail {
     &__intro,
     &__related,
-    &__gallery {
+    &__gallery,
+    &__ba-grid {
       grid-template-columns: 1fr;
     }
 

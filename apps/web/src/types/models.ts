@@ -1,3 +1,14 @@
+export interface BeforeAfterItem {
+  id: string;
+  beforeImage: string;
+  afterImage: string;
+  beforeLabel?: string;
+  afterLabel?: string;
+  title?: string;
+  description?: string;
+  subcategory?: string;
+}
+
 export interface Project {
   id: string;
   slug: string;
@@ -13,6 +24,7 @@ export interface Project {
   tourSlug?: string;
   beforeImage?: string;
   afterImage?: string;
+  beforeAfterItems?: BeforeAfterItem[];
   area?: string;
   status?: string;
   isFeatured?: boolean;
@@ -65,6 +77,7 @@ export interface Testimonial {
 export interface ServiceItem {
   id: string;
   title: string;
+  summary: string;
   description: string;
   image: string;
   icon?: string;

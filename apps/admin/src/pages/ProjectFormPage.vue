@@ -278,6 +278,13 @@
         </q-form>
       </section>
     </div>
+
+    <ProjectGalleryChangesSection
+      v-if="isEdit"
+      class="q-mt-md"
+      :project-id="route.params.id as string"
+      :category="form.category"
+    />
   </q-page>
 </template>
 
@@ -285,6 +292,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import ProjectGalleryChangesSection from '@/components/projects/ProjectGalleryChangesSection.vue'
 import { adminApi } from '@/services/adminApi'
 import { PROJECT_CATEGORIES, subcategoriesFor } from '@/constants/mediaTaxonomy'
 import type { ProjectMedia } from '@/types'

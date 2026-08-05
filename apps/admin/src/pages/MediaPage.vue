@@ -3,7 +3,9 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Galería de medios</h1>
-        <p class="page-subtitle">Biblioteca de archivos multimedia sueltos</p>
+        <p class="page-subtitle">
+          Biblioteca multimedia. Marca como publicada las que deben verse en la web.
+        </p>
       </div>
       <q-btn
         color="primary"
@@ -136,6 +138,20 @@
                 dense
                 flat
                 round
+                :icon="item.is_published === false ? 'visibility_off' : 'visibility'"
+                :color="item.is_published === false ? 'warning' : 'positive'"
+                size="sm"
+                :loading="publishingId === item.id"
+                @click="togglePublished(item)"
+              >
+                <q-tooltip>
+                  {{ item.is_published === false ? 'Mostrar en la web' : 'Ocultar de la web' }}
+                </q-tooltip>
+              </q-btn>
+              <q-btn
+                dense
+                flat
+                round
                 icon="arrow_upward"
                 color="white"
                 size="sm"
@@ -243,6 +259,7 @@ const $q = useQuasar()
 const loading = ref(false)
 const uploading = ref(false)
 const saving = ref(false)
+const publishingId = ref<number | null>(null)
 const showEdit = ref(false)
 const items = ref<MediaItem[]>([])
 const page = ref(1)
@@ -354,6 +371,25 @@ function openEdit(item: MediaItem) {
   editForm.subcategory = item.subcategory || null
   editForm.is_published = item.is_published !== false
   showEdit.value = true
+}
+
+async function togglePublished(item: MediaItem) {
+  const next = item.is_published === false
+  publishingId.value = item.id
+  try {
+    const updated = await adminApi.updateMedia(item.id, { is_published: next })
+    items.value = items.value.map((row) =>
+      row.id === item.id ? { ...row, is_published: updated.is_published !== false } : row,
+    )
+    $q.notify({
+      type: 'positive',
+      message: next ? 'Visible en la web' : 'Oculta en la web',
+    })
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo actualizar la publicación' })
+  } finally {
+    publishingId.value = null
+  }
 }
 
 async function saveEdit() {

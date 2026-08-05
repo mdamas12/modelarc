@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 const menuOpen = ref(false);
+const route = useRoute();
 
 const links = [
   { label: 'Inicio', to: '/' },
@@ -9,12 +11,16 @@ const links = [
   { label: 'Servicios', to: '/servicios' },
   { label: 'Proyectos', to: '/proyectos' },
   { label: 'Recorridos 360°', to: '/recorridos-360' },
-  { label: 'Blog', to: '/blog' },
   { label: 'Contacto', to: '/contacto' },
 ];
 
 function closeMenu() {
   menuOpen.value = false;
+}
+
+function isActive(to: string) {
+  if (to === '/') return route.path === '/';
+  return route.path === to || route.path.startsWith(`${to}/`);
 }
 </script>
 
@@ -31,6 +37,7 @@ function closeMenu() {
           :key="link.to"
           :to="link.to"
           class="site-header__link"
+          :class="{ 'site-header__link--active': isActive(link.to) }"
           @click="closeMenu"
         >
           {{ link.label }}
@@ -81,9 +88,9 @@ function closeMenu() {
 
   &__logo-img {
     display: block;
-    height: 52px;
+    height: 40px;
     width: auto;
-    max-width: min(220px, 40vw);
+    max-width: min(260px, 42vw);
     object-fit: contain;
     object-position: left center;
   }
@@ -97,6 +104,8 @@ function closeMenu() {
   }
 
   &__link {
+    position: relative;
+    padding: 0.35rem 0 0.55rem;
     font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: 0.12em;
@@ -105,9 +114,30 @@ function closeMenu() {
     white-space: nowrap;
     transition: color 0.2s ease;
 
-    &:hover,
-    &.router-link-active {
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: var(--ma-gold);
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover {
       color: var(--ma-gold);
+    }
+
+    &--active {
+      color: var(--ma-gold);
+      font-weight: 600;
+
+      &::after {
+        transform: scaleX(1);
+      }
     }
   }
 
@@ -167,6 +197,13 @@ function closeMenu() {
     &__link {
       padding: 0.9rem 0;
       border-bottom: 1px solid rgba(196, 164, 124, 0.12);
+
+      &::after {
+        left: 0;
+        right: auto;
+        width: 1.5rem;
+        bottom: 0.55rem;
+      }
     }
 
     &__cta {

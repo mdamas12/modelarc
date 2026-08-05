@@ -17,7 +17,8 @@ class ProjectService
     {
         return $this->filteredQuery($filters)
             ->with(['projectType', 'coverMedia'])
-            ->latest()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
             ->paginate($perPage);
     }
 
@@ -27,7 +28,8 @@ class ProjectService
 
         return $this->filteredQuery($filters)
             ->with(['projectType', 'coverMedia'])
-            ->latest('published_at')
+            ->orderBy('sort_order')
+            ->orderByDesc('published_at')
             ->paginate($perPage);
     }
 
@@ -42,6 +44,13 @@ class ProjectService
                         $q->where('is_published', true);
                     }
                     $q->orderBy('sort_order')->with('media');
+                },
+                'galleryChanges' => function ($q) use ($publishedOnly) {
+                    if ($publishedOnly) {
+                        $q->featured();
+                    }
+                    $q->orderBy('sort_order')
+                        ->with(['beforeMedia', 'designMedia', 'afterMedia']);
                 },
                 'virtualTour.scenes.panoramaMedia',
                 'virtualTour.scenes.hotspots',
@@ -69,6 +78,8 @@ class ProjectService
 
             $data['slug'] = $this->uniqueSlug($data['slug'] ?? $data['title']);
             $data['created_by'] = $userId;
+            $data['sort_order'] = $data['sort_order']
+                ?? ((int) Project::query()->max('sort_order') + 1);
 
             /** @var Project $project */
             $project = Project::query()->create($data);
@@ -133,6 +144,42 @@ class ProjectService
         ]);
 
         return $project->fresh(['projectType', 'coverMedia']);
+    }
+
+    /**
+     * @param  list<int>  $ids
+     */
+    public function reorder(array $ids): void
+    {
+        DB::transaction(function () use ($ids) {
+            foreach ($ids as $index => $id) {
+                Project::query()->where('id', $id)->update(['sort_order' => $index]);
+            }
+        });
+    }
+
+    public function move(Project $project, string $direction): Project
+    {
+        $ids = Project::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        $index = array_search($project->id, $ids, true);
+        if ($index === false) {
+            return $project->fresh(['projectType', 'coverMedia']) ?? $project;
+        }
+
+        $target = $direction === 'up' ? $index - 1 : $index + 1;
+        if ($target < 0 || $target >= count($ids)) {
+            return $project->fresh(['projectType', 'coverMedia']) ?? $project;
+        }
+
+        [$ids[$index], $ids[$target]] = [$ids[$target], $ids[$index]];
+        $this->reorder($ids);
+
+        return $project->fresh(['projectType', 'coverMedia']) ?? $project;
     }
 
     public function delete(Project $project): void

@@ -28,6 +28,7 @@ class Project extends Model
         'client_name',
         'cover_media_id',
         'is_featured',
+        'sort_order',
         'has_virtual_tour',
         'publication_status',
         'published_at',
@@ -45,6 +46,7 @@ class Project extends Model
             'published_at' => 'datetime',
             'year' => 'integer',
             'views_count' => 'integer',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -74,6 +76,11 @@ class Project extends Model
     public function projectMedia(): HasMany
     {
         return $this->hasMany(ProjectMedia::class)->orderBy('sort_order');
+    }
+
+    public function galleryChanges(): HasMany
+    {
+        return $this->hasMany(GalleryChange::class)->orderBy('sort_order');
     }
 
     public function virtualTours(): HasMany

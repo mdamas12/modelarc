@@ -251,6 +251,7 @@ export const mockServices: ServiceItem[] = [
   {
     id: 'design',
     title: 'Diseño Arquitectónico',
+    summary: 'Concepto, desarrollo y documentación de proyectos residenciales y comerciales.',
     description:
       'Concepto, desarrollo y documentación de proyectos residenciales y comerciales con identidad propia.',
     image: img.serviceDesign,
@@ -258,6 +259,7 @@ export const mockServices: ServiceItem[] = [
   {
     id: 'build',
     title: 'Construcción',
+    summary: 'Ejecución integral con control de calidad y plazos claros.',
     description:
       'Ejecución integral con control de calidad, plazos claros y coordinación de especialidades.',
     image: img.serviceBuild,
@@ -265,6 +267,7 @@ export const mockServices: ServiceItem[] = [
   {
     id: 'remodel',
     title: 'Remodelación',
+    summary: 'Transformamos espacios existentes con precisión técnica.',
     description:
       'Transformamos espacios existentes con precisión técnica y sensibilidad estética.',
     image: img.serviceRemodel,

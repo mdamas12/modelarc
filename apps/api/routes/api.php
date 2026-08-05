@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\AuthController;
 use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\GalleryChangeController;
 use App\Http\Controllers\Api\Admin\HotspotController;
 use App\Http\Controllers\Api\Admin\LeadController;
 use App\Http\Controllers\Api\Admin\MediaController;
@@ -47,8 +48,16 @@ Route::prefix('admin')->group(function () {
         Route::get('dashboard', DashboardController::class);
 
         Route::apiResource('projects', AdminProjectController::class);
+        Route::post('projects/reorder', [AdminProjectController::class, 'reorder']);
         Route::post('projects/{project}/publish', [AdminProjectController::class, 'publish']);
         Route::post('projects/{project}/archive', [AdminProjectController::class, 'archive']);
+        Route::post('projects/{project}/move', [AdminProjectController::class, 'move']);
+
+        Route::get('projects/{project}/gallery-changes', [GalleryChangeController::class, 'index']);
+        Route::post('projects/{project}/gallery-changes', [GalleryChangeController::class, 'store']);
+        Route::put('projects/{project}/gallery-changes/{galleryChange}', [GalleryChangeController::class, 'update']);
+        Route::delete('projects/{project}/gallery-changes/{galleryChange}', [GalleryChangeController::class, 'destroy']);
+        Route::post('projects/{project}/gallery-changes/reorder', [GalleryChangeController::class, 'reorder']);
 
         Route::get('media', [MediaController::class, 'index']);
         Route::post('media', [MediaController::class, 'store']);

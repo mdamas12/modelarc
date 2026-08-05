@@ -21,7 +21,7 @@ const values = [
   <q-page>
     <section
       class="about-hero"
-      style="background-image: url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=2000&q=80')"
+      style="background-image: url('/about/team.jpg')"
     >
       <div class="about-hero__overlay" />
       <div class="ma-container about-hero__content">
@@ -35,17 +35,19 @@ const values = [
         <SectionHeader
           eyebrow="Modelarc"
           title="Diseño contemporáneo, ejecución impecable"
-          lead="Somos un estudio-constructora enfocado en proyectos residenciales y comerciales de alto nivel. Unimos visión creativa, rigor técnico y una experiencia de cliente excepcional."
+          lead="Somos un estudio de arquitectura y construcción enfocado en proyectos residenciales y comerciales de alto nivel. Combinamos visión creativa, precisión y un cuidado excepcional por cada detalle de tu experiencia."
         />
         <div class="about-intro__grid">
           <p>
-            Creemos que los mejores espacios nacen del diálogo entre arquitectura, materialidad y
-            estilo de vida. Cada proyecto se desarrolla a medida: desde el primer croquis hasta la
-            entrega final y el recorrido virtual 360°.
+            Creemos que los mejores espacios nacen de la combinación entre arquitectura, materiales y
+            tu estilo de vida. Hacemos cada proyecto a medida, desde la primera idea y la experiencia
+            virtual en 360°, hasta la entrega final del proyecto.
           </p>
           <p>
-            Nuestro equipo integra arquitectos, ingenieros y gestores de obra bajo una misma
-            dirección creativa, garantizando coherencia estética y control de calidad en cada etapa.
+            Para materializar espacios con carácter, integramos el talento de arquitectos, ingenieros y
+            especialistas en obra bajo un solo criterio. Al integrar todas las disciplinas, garantizamos
+            que la estética del diseño se respete al máximo y que la ejecución sea impecable de
+            principio a fin.
           </p>
         </div>
       </div>

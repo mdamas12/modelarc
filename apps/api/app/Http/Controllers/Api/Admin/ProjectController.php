@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\MoveProjectRequest;
+use App\Http\Requests\Admin\ReorderProjectsRequest;
 use App\Http\Requests\Admin\StoreProjectRequest;
 use App\Http\Requests\Admin\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
@@ -41,7 +43,15 @@ class ProjectController extends Controller
 
     public function show(Project $project): ProjectResource
     {
-        $project->load(['projectType', 'coverMedia', 'projectMedia.media', 'virtualTour.scenes']);
+        $project->load([
+            'projectType',
+            'coverMedia',
+            'projectMedia.media',
+            'galleryChanges.beforeMedia',
+            'galleryChanges.designMedia',
+            'galleryChanges.afterMedia',
+            'virtualTour.scenes',
+        ]);
 
         return new ProjectResource($project);
     }
@@ -68,5 +78,21 @@ class ProjectController extends Controller
     public function archive(Project $project): ProjectResource
     {
         return new ProjectResource($this->projects->archive($project));
+    }
+
+    public function reorder(ReorderProjectsRequest $request): JsonResponse
+    {
+        $this->projects->reorder($request->validated('ids'));
+
+        return response()->json([
+            'data' => ['message' => 'Orden de proyectos actualizado.'],
+        ]);
+    }
+
+    public function move(MoveProjectRequest $request, Project $project): ProjectResource
+    {
+        return new ProjectResource(
+            $this->projects->move($project, $request->validated('direction'))
+        );
     }
 }

@@ -30,7 +30,7 @@ onMounted(() => {
           />
           <div class="services__body">
             <h3>{{ service.title }}</h3>
-            <p>{{ service.description }}</p>
+            <p>{{ service.summary }}</p>
             <router-link to="/servicios" class="services__link">Descubrir →</router-link>
           </div>
         </article>

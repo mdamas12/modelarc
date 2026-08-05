@@ -20,7 +20,8 @@ class HomeController extends Controller
             ->published()
             ->featured()
             ->with(['projectType', 'coverMedia'])
-            ->latest('published_at')
+            ->orderBy('sort_order')
+            ->orderByDesc('published_at')
             ->limit(6)
             ->get();
 

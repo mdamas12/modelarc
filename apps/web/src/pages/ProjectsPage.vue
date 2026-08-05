@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import ProjectFilters from '@/components/projects/ProjectFilters.vue';
+import PublicMediaGallery from '@/components/projects/PublicMediaGallery.vue';
 import SectionHeader from '@/components/common/SectionHeader.vue';
 import { useProjectStore } from '@/stores/projectStore';
 
@@ -46,6 +47,12 @@ onMounted(() => {
             :project="project"
           />
         </div>
+      </div>
+    </section>
+
+    <section class="ma-section ma-section--cream">
+      <div class="ma-container">
+        <PublicMediaGallery />
       </div>
     </section>
   </q-page>
