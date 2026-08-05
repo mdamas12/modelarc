@@ -53,11 +53,15 @@ class ContactMailNotifier
     protected function recipients(): array
     {
         $raw = (string) config('mail.to.address', 'info@modelarcve.com');
-
-        return array_values(array_unique(array_filter(array_map(
+        $emails = array_map(
             static fn (string $email): string => strtolower(trim($email)),
             explode(',', $raw),
-        ), static fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL))));
+        );
+
+        return array_values(array_unique(array_filter(
+            $emails,
+            static fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL),
+        )));
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\SendContactLeadMailJob;
+use App\Jobs\SendContactLeadWhatsAppJob;
 use App\Models\ActivityLog;
 use App\Models\Lead;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -38,6 +39,15 @@ class LeadService
             SendContactLeadMailJob::dispatch($lead->id);
         } catch (Throwable $e) {
             Log::error('No se pudo encolar el email de nueva solicitud de contacto', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            SendContactLeadWhatsAppJob::dispatch($lead->id);
+        } catch (Throwable $e) {
+            Log::error('No se pudo encolar el aviso WhatsApp de nueva solicitud de contacto', [
                 'lead_id' => $lead->id,
                 'error' => $e->getMessage(),
             ]);
