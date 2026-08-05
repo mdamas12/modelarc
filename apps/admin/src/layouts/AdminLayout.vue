@@ -13,7 +13,7 @@
       <div class="drawer-inner column full-height">
         <div class="drawer-brand">
           <img
-            src="/brand/logo.svg?v=4"
+            src="/brand/logo_horizontal.svg?v=2"
             alt="Modelarc"
             class="drawer-logo-img"
           />

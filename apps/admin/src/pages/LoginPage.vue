@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-brand">
-        <img src="/brand/logo-dark.svg" alt="Modelarc" class="login-brand__logo" />
+        <img src="/brand/logo-dark.svg?v=2" alt="Modelarc" class="login-brand__logo" />
       </div>
       <p class="text-center text-grey-6 q-mb-lg">Panel de administración</p>
 

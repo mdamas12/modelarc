@@ -75,7 +75,7 @@ onMounted(async () => {
     <div class="ma-container site-footer__grid">
       <div class="site-footer__col site-footer__brand-col">
         <router-link to="/" class="site-footer__brand">
-          <img src="/brand/logo.svg" alt="Modelarc" class="site-footer__logo-img" />
+          <img src="/brand/logo_horizontal.svg?v=2" alt="Modelarc" class="site-footer__logo-img" />
         </router-link>
         <p class="site-footer__about">
           Arquitectura, construcción y remodelación de espacios que elevan la vida cotidiana.
@@ -257,9 +257,9 @@ onMounted(async () => {
 
   &__logo-img {
     display: block;
-    height: 44px;
+    height: 40px;
     width: auto;
-    max-width: 260px;
+    max-width: 280px;
     object-fit: contain;
     object-position: left center;
   }

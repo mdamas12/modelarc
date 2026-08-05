@@ -28,7 +28,7 @@ function isActive(to: string) {
   <header class="site-header" :class="{ 'site-header--open': menuOpen }">
     <div class="site-header__inner ma-container">
       <router-link to="/" class="site-header__logo" @click="closeMenu">
-        <img src="/brand/logo.svg" alt="Modelarc" class="site-header__logo-img" />
+        <img src="/brand/logo_horizontal.svg?v=2" alt="Modelarc" class="site-header__logo-img" />
       </router-link>
 
       <nav class="site-header__nav" :class="{ 'site-header__nav--open': menuOpen }" aria-label="Principal">
@@ -88,9 +88,9 @@ function isActive(to: string) {
 
   &__logo-img {
     display: block;
-    height: 40px;
+    height: 36px;
     width: auto;
-    max-width: min(260px, 42vw);
+    max-width: min(280px, 48vw);
     object-fit: contain;
     object-position: left center;
   }
