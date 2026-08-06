@@ -19,6 +19,13 @@ export type ManualCategory = {
   guides: ManualGuide[]
 }
 
+/** Bump when regenerating screenshots so browsers skip stale cached PNGs. */
+const IMG_V = 'v=3'
+
+function img(path: string): string {
+  return `${path}?${IMG_V}`
+}
+
 export const manuals: ManualCategory[] = [
   {
     id: 'usuarios',
@@ -36,22 +43,22 @@ export const manuals: ManualCategory[] = [
           {
             title: 'Abrir Usuarios',
             body: 'En el menú lateral, sección Administración, entra a Usuarios. Verás el listado con búsqueda y filtro por estado (pendiente, activo o bloqueado).',
-            image: '/manuals/usuarios/crear-1.png',
+            image: img('/manuals/usuarios/crear-1.png'),
           },
           {
             title: 'Abrir el formulario de invitación',
             body: 'Haz clic en Invitar usuario. No se pide contraseña: el invitado la creará al activar su cuenta.',
-            image: '/manuals/usuarios/crear-2.png',
+            image: img('/manuals/usuarios/crear-2.png'),
           },
           {
             title: 'Completar nombre, email y rol',
             body: 'Escribe el nombre, el email de acceso y el rol (admin o editor). Ese email recibirá la bienvenida con el enlace de activación.',
-            image: '/manuals/usuarios/crear-3.png',
+            image: img('/manuals/usuarios/crear-3.png'),
           },
           {
             title: 'Enviar invitación',
             body: 'Confirma con Enviar invitación. El usuario aparece como pending. Cuando active su cuenta desde el email, pasará a active y podrá iniciar sesión.',
-            image: '/manuals/usuarios/crear-4.png',
+            image: img('/manuals/usuarios/crear-4.png'),
           },
         ],
       },
@@ -63,17 +70,17 @@ export const manuals: ManualCategory[] = [
           {
             title: 'Localizar la cuenta',
             body: 'En Usuarios, busca por nombre o email y abre la fila que quieres modificar.',
-            image: '/manuals/usuarios/editar-1.png',
+            image: img('/manuals/usuarios/editar-1.png'),
           },
           {
             title: 'Abrir Editar',
             body: 'Haz clic en Editar. Se muestra el formulario con los datos actuales (sin contraseña).',
-            image: '/manuals/usuarios/editar-2.png',
+            image: img('/manuals/usuarios/editar-2.png'),
           },
           {
             title: 'Guardar cambios',
             body: 'Ajusta nombre, email o rol y pulsa Guardar. Los cambios se aplican de inmediato en el panel.',
-            image: '/manuals/usuarios/editar-3.png',
+            image: img('/manuals/usuarios/editar-3.png'),
           },
         ],
       },
@@ -86,17 +93,17 @@ export const manuals: ManualCategory[] = [
           {
             title: 'Abrir la cuenta activa',
             body: 'Solo cuentas active pueden restablecer contraseña. En Usuarios, haz clic en Editar sobre esa fila.',
-            image: '/manuals/usuarios/reset-1.png',
+            image: img('/manuals/usuarios/reset-1.png'),
           },
           {
             title: 'Enviar restablecimiento',
             body: 'Dentro del diálogo, pulsa Restablecer contraseña. Se envía un correo con un enlace válido por 7 días y de un solo uso.',
-            image: '/manuals/usuarios/reset-2.png',
+            image: img('/manuals/usuarios/reset-2.png'),
           },
           {
             title: 'El usuario actualiza su acceso',
             body: 'Al abrir el enlace, el usuario confirma la nueva contraseña y queda redirigido al login de admin.modelarcve.com.',
-            image: '/manuals/usuarios/reset-3.png',
+            image: img('/manuals/usuarios/reset-3.png'),
           },
         ],
       },
@@ -109,17 +116,17 @@ export const manuals: ManualCategory[] = [
           {
             title: 'Elegir la cuenta',
             body: 'En Usuarios identifica la fila. No bloquees tu propia sesión si eres el único administrador activo.',
-            image: '/manuals/usuarios/bloquear-1.png',
+            image: img('/manuals/usuarios/bloquear-1.png'),
           },
           {
             title: 'Confirmar el bloqueo',
             body: 'Haz clic en Bloquear y confirma. La cuenta pasa a blocked y pierde el acceso al panel de inmediato.',
-            image: '/manuals/usuarios/bloquear-2.png',
+            image: img('/manuals/usuarios/bloquear-2.png'),
           },
           {
             title: 'Reactivar cuando haga falta',
             body: 'En una cuenta bloqueada verás Activar. Al reactivarla vuelve a active y puede iniciar sesión de nuevo. Si está pending, usa Reenviar para volver a mandar el email de activación.',
-            image: '/manuals/usuarios/bloquear-3.png',
+            image: img('/manuals/usuarios/bloquear-3.png'),
           },
         ],
       },
