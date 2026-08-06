@@ -8,6 +8,20 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, title: 'Login' },
   },
   {
+    path: '/activar/:token',
+    name: 'activate-account',
+    component: () => import('@/pages/AccountPasswordPage.vue'),
+    props: { mode: 'activation' },
+    meta: { requiresAuth: false, title: 'Activar cuenta' },
+  },
+  {
+    path: '/restablecer/:token',
+    name: 'reset-password',
+    component: () => import('@/pages/AccountPasswordPage.vue'),
+    props: { mode: 'password_reset' },
+    meta: { requiresAuth: false, title: 'Restablecer contraseña' },
+  },
+  {
     path: '/',
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true },

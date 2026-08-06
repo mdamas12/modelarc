@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AccountActivationController;
+use App\Http\Controllers\Api\Admin\AccountPasswordResetController;
 use App\Http\Controllers\Api\Admin\AuthController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\GalleryChangeController;
@@ -13,6 +15,7 @@ use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\TestimonialController;
 use App\Http\Controllers\Api\Admin\TestimonialInvitationController as AdminTestimonialInvitationController;
 use App\Http\Controllers\Api\Admin\TourController as AdminTourController;
+use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Website\ContactController;
 use App\Http\Controllers\Api\Website\GalleryController;
 use App\Http\Controllers\Api\Website\HomeController;
@@ -42,10 +45,23 @@ Route::prefix('public')->group(function () {
 Route::prefix('admin')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 
+    Route::get('account/activation/{token}', [AccountActivationController::class, 'show']);
+    Route::post('account/activation/{token}', [AccountActivationController::class, 'store']);
+    Route::get('account/password-reset/{token}', [AccountPasswordResetController::class, 'show']);
+    Route::post('account/password-reset/{token}', [AccountPasswordResetController::class, 'store']);
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
         Route::get('dashboard', DashboardController::class);
+
+        Route::get('users', [UserController::class, 'index']);
+        Route::post('users', [UserController::class, 'store']);
+        Route::put('users/{user}', [UserController::class, 'update']);
+        Route::post('users/{user}/block', [UserController::class, 'block']);
+        Route::post('users/{user}/unblock', [UserController::class, 'unblock']);
+        Route::post('users/{user}/resend-activation', [UserController::class, 'resendActivation']);
+        Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
 
         Route::apiResource('projects', AdminProjectController::class);
         Route::post('projects/reorder', [AdminProjectController::class, 'reorder']);

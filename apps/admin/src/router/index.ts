@@ -22,7 +22,7 @@ export default defineRouter(function () {
 
   Router.beforeEach((to) => {
     const token = localStorage.getItem(TOKEN_KEY);
-    const requiresAuth = to.matched.some((r) => r.meta.requiresAuth !== false && r.path !== '/login');
+    const requiresAuth = to.matched.some((r) => r.meta.requiresAuth !== false);
 
     if (to.path === '/login' || to.name === 'login') {
       if (token) return { path: '/' };

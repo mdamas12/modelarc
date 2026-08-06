@@ -18,9 +18,15 @@ class AuthController extends Controller
         /** @var User|null $user */
         $user = User::query()->where('email', $request->string('email'))->first();
 
-        if (! $user || ! Hash::check($request->string('password')->toString(), $user->password)) {
+        if (! $user || blank($user->password) || ! Hash::check($request->string('password')->toString(), $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Las credenciales proporcionadas son incorrectas.'],
+            ]);
+        }
+
+        if ($user->status === 'pending') {
+            throw ValidationException::withMessages([
+                'email' => ['Tu cuenta está pendiente de activación. Revisa tu correo.'],
             ]);
         }
 

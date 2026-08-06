@@ -23,13 +23,13 @@ export const manuals: ManualCategory[] = [
   {
     id: 'usuarios',
     title: 'Usuarios',
-    summary: 'Cómo administrar cuentas del panel: crear, editar y bloquear usuarios.',
+    summary: 'Cómo invitar, editar y bloquear cuentas del panel.',
     icon: 'group',
     guides: [
       {
         slug: 'crear-usuario',
-        title: 'Crear usuario',
-        summary: 'Alta de un nuevo administrador o colaborador del panel.',
+        title: 'Invitar usuario',
+        summary: 'Alta por invitación: nombre, email y rol. El usuario activa su cuenta desde el email.',
         steps: [
           {
             title: 'Abrir el módulo Usuarios',
@@ -37,18 +37,18 @@ export const manuals: ManualCategory[] = [
             image: '/manuals/usuarios/crear-1.png',
           },
           {
-            title: 'Iniciar el alta',
-            body: 'Haz clic en el botón Nuevo usuario (o Crear). Se abrirá el formulario de registro.',
+            title: 'Iniciar la invitación',
+            body: 'Haz clic en Invitar usuario. Se abrirá el formulario sin campo de contraseña.',
             image: '/manuals/usuarios/crear-2.png',
           },
           {
             title: 'Completar los datos',
-            body: 'Ingresa nombre, email, contraseña y rol. Revisa que el email sea válido; será el acceso al panel.',
+            body: 'Ingresa nombre, email y rol. El sistema enviará un correo de bienvenida para que la persona active su cuenta.',
             image: '/manuals/usuarios/crear-3.png',
           },
           {
-            title: 'Guardar',
-            body: 'Confirma con Guardar. El usuario aparecerá en la tabla y podrá iniciar sesión con su email y contraseña.',
+            title: 'Enviar invitación',
+            body: 'Confirma con Enviar invitación. El usuario quedará en estado pendiente hasta que active su cuenta desde el email.',
             image: '/manuals/usuarios/crear-4.png',
           },
         ],
@@ -56,7 +56,7 @@ export const manuals: ManualCategory[] = [
       {
         slug: 'editar-usuario',
         title: 'Editar usuario',
-        summary: 'Actualizar nombre, email, rol u otros datos de una cuenta existente.',
+        summary: 'Actualizar nombre, email, rol o enviar un restablecimiento de contraseña.',
         steps: [
           {
             title: 'Abrir Usuarios',
@@ -65,12 +65,12 @@ export const manuals: ManualCategory[] = [
           },
           {
             title: 'Abrir la edición',
-            body: 'En la fila del usuario, haz clic en Editar. Se mostrará el formulario con los datos actuales.',
+            body: 'En la fila del usuario, haz clic en Editar. Puedes cambiar nombre, email y rol, o usar Restablecer contraseña.',
             image: '/manuals/usuarios/editar-2.png',
           },
           {
             title: 'Modificar y guardar',
-            body: 'Cambia los campos necesarios (nombre, rol, etc.) y confirma con Guardar. Los cambios se aplican de inmediato.',
+            body: 'Guarda los cambios. Si enviaste un restablecimiento, el usuario recibirá un email con un enlace de un solo uso.',
             image: '/manuals/usuarios/editar-3.png',
           },
         ],
@@ -87,12 +87,12 @@ export const manuals: ManualCategory[] = [
           },
           {
             title: 'Bloquear acceso',
-            body: 'Haz clic en Bloquear (o cambia el estado a inactivo). Confirma la acción en el diálogo.',
+            body: 'Haz clic en Bloquear y confirma la acción en el diálogo.',
             image: '/manuals/usuarios/bloquear-2.png',
           },
           {
             title: 'Verificar el estado',
-            body: 'La cuenta quedará marcada como bloqueada o inactiva y no podrá iniciar sesión hasta que la reactives.',
+            body: 'La cuenta quedará bloqueada y no podrá iniciar sesión hasta que la reactives.',
             image: '/manuals/usuarios/bloquear-3.png',
           },
         ],

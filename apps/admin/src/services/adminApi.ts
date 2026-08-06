@@ -11,6 +11,7 @@ import type {
   Testimonial,
   TourHotspot,
   TourScene,
+  User,
   VirtualTour,
 } from '@/types'
 
@@ -312,5 +313,79 @@ export const adminApi = {
 
   async deleteSetting(id: number | string) {
     await api.delete(`/admin/settings/${id}`)
+  },
+
+  async users(params?: Record<string, unknown>) {
+    const { data } = await api.get('/admin/users', { params })
+    return data as Paginated<User>
+  },
+
+  async inviteUser(payload: { name: string; email: string; role: string }) {
+    const { data } = await api.post('/admin/users', payload)
+    return data as {
+      data: User
+      meta?: {
+        mail_sent?: boolean
+        mail_error?: string | null
+        message?: string
+      }
+    }
+  },
+
+  async updateUser(id: number | string, payload: { name?: string; email?: string; role?: string }) {
+    const { data } = await api.put(`/admin/users/${id}`, payload)
+    return unwrapData<User>(data)
+  },
+
+  async blockUser(id: number | string) {
+    const { data } = await api.post(`/admin/users/${id}/block`)
+    return unwrapData<User>(data)
+  },
+
+  async unblockUser(id: number | string) {
+    const { data } = await api.post(`/admin/users/${id}/unblock`)
+    return unwrapData<User>(data)
+  },
+
+  async resendUserActivation(id: number | string) {
+    const { data } = await api.post(`/admin/users/${id}/resend-activation`)
+    return data as {
+      data: User
+      meta?: { mail_sent?: boolean; mail_error?: string | null; message?: string }
+    }
+  },
+
+  async resetUserPassword(id: number | string) {
+    const { data } = await api.post(`/admin/users/${id}/reset-password`)
+    return data as {
+      data: User
+      meta?: { mail_sent?: boolean; mail_error?: string | null; message?: string }
+    }
+  },
+
+  async getActivation(token: string) {
+    const { data } = await api.get(`/admin/account/activation/${token}`)
+    return unwrapData<{ name: string; email: string; expires_at?: string }>(data)
+  },
+
+  async activateAccount(
+    token: string,
+    payload: { password: string; password_confirmation: string },
+  ) {
+    const { data } = await api.post(`/admin/account/activation/${token}`, payload)
+    return unwrapData<{ message: string; login_url?: string }>(data)
+  },
+
+  async getPasswordReset(token: string) {
+    const { data } = await api.get(`/admin/account/password-reset/${token}`)
+    return unwrapData<{ name: string; email: string; expires_at?: string }>(data)
+  },
+
+  async completePasswordReset(
+    token: string,
+    payload: { password: string; password_confirmation: string },
+  ) {
+    const { data } = await api.post(`/admin/account/password-reset/${token}`, payload)
+    return unwrapData<{ message: string; login_url?: string }>(data)
   },
 }

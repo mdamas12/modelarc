@@ -51,4 +51,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ActivityLog::class);
     }
+
+    public function accountTokens(): HasMany
+    {
+        return $this->hasMany(UserAccountToken::class);
+    }
 }
