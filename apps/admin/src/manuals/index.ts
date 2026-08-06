@@ -23,32 +23,34 @@ export const manuals: ManualCategory[] = [
   {
     id: 'usuarios',
     title: 'Usuarios',
-    summary: 'Cómo invitar, editar y bloquear cuentas del panel.',
+    summary:
+      'Invita colaboradores por email, gestiona roles y controla el acceso al panel de administración.',
     icon: 'group',
     guides: [
       {
         slug: 'crear-usuario',
         title: 'Invitar usuario',
-        summary: 'Alta por invitación: nombre, email y rol. El usuario activa su cuenta desde el email.',
+        summary:
+          'Crea una cuenta pendiente con nombre, email y rol. La persona activa su acceso desde el correo.',
         steps: [
           {
-            title: 'Abrir el módulo Usuarios',
-            body: 'En el menú lateral, dentro de Administración, haz clic en Usuarios. Verás el listado de cuentas del panel.',
+            title: 'Abrir Usuarios',
+            body: 'En el menú lateral, sección Administración, entra a Usuarios. Verás el listado con búsqueda y filtro por estado (pendiente, activo o bloqueado).',
             image: '/manuals/usuarios/crear-1.png',
           },
           {
-            title: 'Iniciar la invitación',
-            body: 'Haz clic en Invitar usuario. Se abrirá el formulario sin campo de contraseña.',
+            title: 'Abrir el formulario de invitación',
+            body: 'Haz clic en Invitar usuario. No se pide contraseña: el invitado la creará al activar su cuenta.',
             image: '/manuals/usuarios/crear-2.png',
           },
           {
-            title: 'Completar los datos',
-            body: 'Ingresa nombre, email y rol. El sistema enviará un correo de bienvenida para que la persona active su cuenta.',
+            title: 'Completar nombre, email y rol',
+            body: 'Escribe el nombre, el email de acceso y el rol (admin o editor). Ese email recibirá la bienvenida con el enlace de activación.',
             image: '/manuals/usuarios/crear-3.png',
           },
           {
             title: 'Enviar invitación',
-            body: 'Confirma con Enviar invitación. El usuario quedará en estado pendiente hasta que active su cuenta desde el email.',
+            body: 'Confirma con Enviar invitación. El usuario aparece como pending. Cuando active su cuenta desde el email, pasará a active y podrá iniciar sesión.',
             image: '/manuals/usuarios/crear-4.png',
           },
         ],
@@ -56,43 +58,67 @@ export const manuals: ManualCategory[] = [
       {
         slug: 'editar-usuario',
         title: 'Editar usuario',
-        summary: 'Actualizar nombre, email, rol o enviar un restablecimiento de contraseña.',
+        summary: 'Actualiza nombre, email o rol de una cuenta existente.',
         steps: [
           {
-            title: 'Abrir Usuarios',
-            body: 'Ve a Administración → Usuarios y localiza la cuenta que quieres modificar.',
+            title: 'Localizar la cuenta',
+            body: 'En Usuarios, busca por nombre o email y abre la fila que quieres modificar.',
             image: '/manuals/usuarios/editar-1.png',
           },
           {
-            title: 'Abrir la edición',
-            body: 'En la fila del usuario, haz clic en Editar. Puedes cambiar nombre, email y rol, o usar Restablecer contraseña.',
+            title: 'Abrir Editar',
+            body: 'Haz clic en Editar. Se muestra el formulario con los datos actuales (sin contraseña).',
             image: '/manuals/usuarios/editar-2.png',
           },
           {
-            title: 'Modificar y guardar',
-            body: 'Guarda los cambios. Si enviaste un restablecimiento, el usuario recibirá un email con un enlace de un solo uso.',
+            title: 'Guardar cambios',
+            body: 'Ajusta nombre, email o rol y pulsa Guardar. Los cambios se aplican de inmediato en el panel.',
             image: '/manuals/usuarios/editar-3.png',
           },
         ],
       },
       {
-        slug: 'bloquear-usuario',
-        title: 'Bloquear usuario',
-        summary: 'Desactivar el acceso de una cuenta sin eliminarla del sistema.',
+        slug: 'restablecer-contrasena',
+        title: 'Restablecer contraseña',
+        summary:
+          'Envía un email con un enlace de un solo uso para que el usuario defina una nueva contraseña.',
         steps: [
           {
-            title: 'Localizar la cuenta',
-            body: 'En Administración → Usuarios, busca el usuario que deseas bloquear. Revisa que no sea tu propia sesión activa si eres el único admin.',
+            title: 'Abrir la cuenta activa',
+            body: 'Solo cuentas active pueden restablecer contraseña. En Usuarios, haz clic en Editar sobre esa fila.',
+            image: '/manuals/usuarios/reset-1.png',
+          },
+          {
+            title: 'Enviar restablecimiento',
+            body: 'Dentro del diálogo, pulsa Restablecer contraseña. Se envía un correo con un enlace válido por 7 días y de un solo uso.',
+            image: '/manuals/usuarios/reset-2.png',
+          },
+          {
+            title: 'El usuario actualiza su acceso',
+            body: 'Al abrir el enlace, el usuario confirma la nueva contraseña y queda redirigido al login de admin.modelarcve.com.',
+            image: '/manuals/usuarios/reset-3.png',
+          },
+        ],
+      },
+      {
+        slug: 'bloquear-usuario',
+        title: 'Bloquear o reactivar',
+        summary:
+          'Suspende el acceso sin borrar la cuenta, o reactívala cuando corresponda.',
+        steps: [
+          {
+            title: 'Elegir la cuenta',
+            body: 'En Usuarios identifica la fila. No bloquees tu propia sesión si eres el único administrador activo.',
             image: '/manuals/usuarios/bloquear-1.png',
           },
           {
-            title: 'Bloquear acceso',
-            body: 'Haz clic en Bloquear y confirma la acción en el diálogo.',
+            title: 'Confirmar el bloqueo',
+            body: 'Haz clic en Bloquear y confirma. La cuenta pasa a blocked y pierde el acceso al panel de inmediato.',
             image: '/manuals/usuarios/bloquear-2.png',
           },
           {
-            title: 'Verificar el estado',
-            body: 'La cuenta quedará bloqueada y no podrá iniciar sesión hasta que la reactives.',
+            title: 'Reactivar cuando haga falta',
+            body: 'En una cuenta bloqueada verás Activar. Al reactivarla vuelve a active y puede iniciar sesión de nuevo. Si está pending, usa Reenviar para volver a mandar el email de activación.',
             image: '/manuals/usuarios/bloquear-3.png',
           },
         ],
