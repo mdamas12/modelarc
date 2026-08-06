@@ -27,7 +27,7 @@ class TestimonialInvitationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.testimonial-invitation',
+            view: 'emails.testimonial-invitation-html',
             with: [
                 'clientName' => $this->invitation->client_name,
                 'projectName' => $this->invitation->project?->title ?? 'tu proyecto',

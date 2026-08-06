@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Testimonial;
 use App\Models\TestimonialInvitation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -74,9 +75,26 @@ class TestimonialInvitationService
      */
     protected function sendMail(TestimonialInvitation $invitation): array
     {
+        $invitation->loadMissing('project');
+        $projectName = $invitation->project?->title ?? 'tu proyecto';
+        $subject = "Tu opinión sobre {$projectName} — Modelarc";
+        $html = view('emails.testimonial-invitation-html', [
+            'clientName' => $invitation->client_name,
+            'projectName' => $projectName,
+            'url' => $invitation->publicUrl(),
+        ])->render();
+
+        $resendKey = (string) config('services.resend.key', '');
+
         try {
-            Mail::to($invitation->client_email)->send(
-                new TestimonialInvitationMail($invitation->loadMissing('project'))
+            if ($resendKey !== '') {
+                $this->sendViaResend($resendKey, $invitation, $subject, $html);
+
+                return [true, null];
+            }
+
+            Mail::to($invitation->client_email)->sendNow(
+                new TestimonialInvitationMail($invitation)
             );
 
             return [true, null];
@@ -88,6 +106,36 @@ class TestimonialInvitationService
             ]);
 
             return [false, $e->getMessage()];
+        }
+    }
+
+    protected function sendViaResend(
+        string $apiKey,
+        TestimonialInvitation $invitation,
+        string $subject,
+        string $html,
+    ): void {
+        $fromAddress = (string) config('mail.from.address', 'info@modelarcve.com');
+        $fromName = (string) config('mail.from.name', 'Modelarc');
+
+        $response = Http::withToken($apiKey)
+            ->acceptJson()
+            ->timeout(20)
+            ->post('https://api.resend.com/emails', [
+                'from' => "{$fromName} <{$fromAddress}>",
+                'to' => [$invitation->client_email],
+                'subject' => $subject,
+                'html' => $html,
+            ]);
+
+        if ($response->failed()) {
+            Log::error('Resend rechazó la invitación de testimonio', [
+                'invitation_id' => $invitation->id,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new \RuntimeException('Resend email failed: '.$response->body());
         }
     }
 
