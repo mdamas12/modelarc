@@ -78,15 +78,15 @@ class TestimonialInvitationService
         $invitation->loadMissing('project');
         $projectName = $invitation->project?->title ?? 'tu proyecto';
         $subject = "Tu opinión sobre {$projectName} — Modelarc";
-        $html = view('emails.testimonial-invitation-html', [
-            'clientName' => $invitation->client_name,
-            'projectName' => $projectName,
-            'url' => $invitation->publicUrl(),
-        ])->render();
-
         $resendKey = (string) config('services.resend.key', '');
 
         try {
+            $html = view('emails.testimonial-invitation-html', [
+                'clientName' => $invitation->client_name,
+                'projectName' => $projectName,
+                'url' => $invitation->publicUrl(),
+            ])->render();
+
             if ($resendKey !== '') {
                 $this->sendViaResend($resendKey, $invitation, $subject, $html);
 
