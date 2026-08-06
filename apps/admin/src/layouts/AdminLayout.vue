@@ -132,6 +132,7 @@ const menuSections = [
     label: 'Administración',
     items: [
       { label: 'Usuarios', icon: 'group', to: '/usuarios' },
+      { label: 'Manuales', icon: 'menu_book', to: '/manuales' },
       { label: 'Configuración', icon: 'settings', to: '/configuracion' },
     ],
   },

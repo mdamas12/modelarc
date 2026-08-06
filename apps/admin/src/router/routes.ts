@@ -83,6 +83,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Usuarios' },
       },
       {
+        path: 'manuales',
+        name: 'manuals',
+        component: () => import('@/pages/manuals/ManualsIndexPage.vue'),
+        meta: { title: 'Manuales' },
+      },
+      {
+        path: 'manuales/:category',
+        name: 'manual-category',
+        component: () => import('@/pages/manuals/ManualCategoryPage.vue'),
+        meta: { title: 'Manuales' },
+      },
+      {
+        path: 'manuales/:category/:slug',
+        name: 'manual-guide',
+        component: () => import('@/pages/manuals/ManualGuidePage.vue'),
+        meta: { title: 'Manuales' },
+      },
+      {
         path: 'configuracion',
         name: 'settings',
         component: () => import('@/pages/SettingsPage.vue'),
