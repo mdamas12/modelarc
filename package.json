@@ -17,5 +17,24 @@
   "engines": {
     "node": ">=22.12",
     "php": ">=8.3"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdamas12/modelarc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mdamas12/modelarc/issues"
+  },
+  "homepage": "https://github.com/mdamas12/modelarc#readme",
+  "devDependencies": {
+    "playwright": "^1.62.1"
   }
 }
