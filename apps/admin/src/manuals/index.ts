@@ -20,13 +20,200 @@ export type ManualCategory = {
 }
 
 /** Bump when regenerating screenshots so browsers skip stale cached PNGs. */
-const IMG_V = 'v=3'
+const IMG_V = 'v=4'
 
 function img(path: string): string {
   return `${path}?${IMG_V}`
 }
 
 export const manuals: ManualCategory[] = [
+  {
+    id: 'proyectos',
+    title: 'Proyectos',
+    summary: 'Crea proyectos, sube la galería, publica en la web y arma comparaciones antes/después.',
+    icon: 'apartment',
+    guides: [
+      {
+        slug: 'crear-proyecto',
+        title: 'Crear un proyecto',
+        summary: 'Alta del proyecto con título y categoría. Las fotos se agregan después de guardar.',
+        steps: [
+          {
+            title: 'Abrir Proyectos',
+            body: 'En Gestión, entra a Proyectos. Verás el listado con búsqueda, filtros y acciones de publicar o archivar.',
+            image: img('/manuals/proyectos/crear-1.png'),
+          },
+          {
+            title: 'Nuevo proyecto',
+            body: 'Haz clic en Nuevo proyecto. Completa al menos el título y la categoría. Las fotografías se cargan una vez creado.',
+            image: img('/manuals/proyectos/crear-2.png'),
+          },
+          {
+            title: 'Crear proyecto',
+            body: 'Pulsa Crear proyecto. Quedarás en la edición, donde ya puedes subir la galería y configurar Antes y después.',
+            image: img('/manuals/proyectos/crear-3.png'),
+          },
+        ],
+      },
+      {
+        slug: 'galeria-fotos',
+        title: 'Subir y ordenar la galería',
+        summary: 'Carga fotos, marca la destacada, controla cuáles van a la web y guarda la galería.',
+        steps: [
+          {
+            title: 'Abrir la edición',
+            body: 'Desde el listado, Editar el proyecto. La sección Fotografías del proyecto está arriba del formulario.',
+            image: img('/manuals/proyectos/galeria-1.png'),
+          },
+          {
+            title: 'Subir fotos',
+            body: 'Usa Subir fotos o arrastra imágenes. Puedes marcar una como destacada, reordenar y activar Web en cada miniatura.',
+            image: img('/manuals/proyectos/galeria-2.png'),
+          },
+          {
+            title: 'Guardar galería',
+            body: 'Pulsa Guardar galería para persistir orden, portada y visibilidad. Es independiente de Guardar cambios del formulario.',
+            image: img('/manuals/proyectos/galeria-3.png'),
+          },
+        ],
+      },
+      {
+        slug: 'publicar-archivar',
+        title: 'Publicar o archivar',
+        summary: 'Controla si el proyecto aparece en el sitio público.',
+        steps: [
+          {
+            title: 'Localizar el proyecto',
+            body: 'En el listado de Proyectos identifica la tarjeta. El estado puede ser Borrador, Publicado o Archivado.',
+            image: img('/manuals/proyectos/publicar-1.png'),
+          },
+          {
+            title: 'Publicar',
+            body: 'Si está en borrador, haz clic en Publicar y confirma. El proyecto queda visible en la web.',
+            image: img('/manuals/proyectos/publicar-2.png'),
+          },
+          {
+            title: 'Archivar',
+            body: 'Si ya está publicado, Archivar lo oculta del sitio sin eliminarlo. Puedes volver a publicarlo después.',
+            image: img('/manuals/proyectos/publicar-3.png'),
+          },
+        ],
+      },
+      {
+        slug: 'antes-despues',
+        title: 'Antes y después',
+        summary: 'Crea comparaciones visuales para mostrar el cambio del proyecto.',
+        steps: [
+          {
+            title: 'Ir a Antes y después',
+            body: 'En la edición del proyecto, baja a la sección Antes y después y pulsa Nueva comparación.',
+            image: img('/manuals/proyectos/ba-1.png'),
+          },
+          {
+            title: 'Cargar imágenes',
+            body: 'Sube la imagen de Antes y al menos Diseño o Después. Marca Destacada en la web si debe verse en el sitio público.',
+            image: img('/manuals/proyectos/ba-2.png'),
+          },
+          {
+            title: 'Guardar la comparación',
+            body: 'Confirma con Guardar. Las no destacadas quedan Solo admin y no aparecen en la web.',
+            image: img('/manuals/proyectos/ba-3.png'),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'recorridos',
+    title: 'Recorridos 360°',
+    summary: 'Crea tours virtuales, agrega escenas panorámicas y puntos interactivos en el Visor 360°.',
+    icon: 'panorama_photosphere',
+    guides: [
+      {
+        slug: 'crear-recorrido',
+        title: 'Crear un recorrido',
+        summary: 'Vincula un tour a un proyecto existente y abre el editor.',
+        steps: [
+          {
+            title: 'Abrir Recorridos 360°',
+            body: 'En Gestión, entra a Recorridos 360°. Verás las tarjetas de cada tour con su proyecto y cantidad de escenas.',
+            image: img('/manuals/recorridos/crear-1.png'),
+          },
+          {
+            title: 'Nuevo tour',
+            body: 'Haz clic en Nuevo tour. Completa Nombre y selecciona un Proyecto (no archivado). La descripción es opcional.',
+            image: img('/manuals/recorridos/crear-2.png'),
+          },
+          {
+            title: 'Crear y entrar al editor',
+            body: 'Pulsa Crear. Se abre el Editor de recorrido. Aún no hay escenas: el siguiente paso es agregar un panorama.',
+            image: img('/manuals/recorridos/crear-3.png'),
+          },
+        ],
+      },
+      {
+        slug: 'agregar-escena',
+        title: 'Agregar una escena',
+        summary: 'Sube un panorama 360° para que el Visor tenga una escena navegable.',
+        steps: [
+          {
+            title: 'Nueva escena',
+            body: 'En el editor, pulsa Escena (o el acceso a Nueva escena). Escribe un nombre identificable.',
+            image: img('/manuals/recorridos/escena-1.png'),
+          },
+          {
+            title: 'Subir panorama',
+            body: 'Usa Subir panorama para cargar la imagen equirectangular. Luego pulsa Crear.',
+            image: img('/manuals/recorridos/escena-2.png'),
+          },
+          {
+            title: 'Seleccionar la escena',
+            body: 'La escena aparece en el panel Escenas. Selecciónala para verla en el Visor 360° del centro.',
+            image: img('/manuals/recorridos/escena-3.png'),
+          },
+        ],
+      },
+      {
+        slug: 'escena-inicial',
+        title: 'Definir la escena inicial',
+        summary: 'Elige con qué panorama arranca el recorrido al abrirse.',
+        steps: [
+          {
+            title: 'Abrir el panel Escenas',
+            body: 'Con al menos dos escenas, localiza la estrella junto a cada una en el listado izquierdo.',
+            image: img('/manuals/recorridos/inicial-1.png'),
+          },
+          {
+            title: 'Usar como escena inicial',
+            body: 'Haz clic en la estrella de la escena deseada. Quedará marcada como Escena inicial del tour.',
+            image: img('/manuals/recorridos/inicial-2.png'),
+          },
+        ],
+      },
+      {
+        slug: 'puntos-interactivos',
+        title: 'Agregar puntos interactivos',
+        summary: 'Coloca hotspots en el Visor 360° para ir a otra escena, mostrar info, media o un enlace.',
+        steps: [
+          {
+            title: 'Orientar el visor',
+            body: 'Selecciona una escena y mueve el Visor 360° hasta el punto donde quieres el hotspot (yaw/pitch actuales se usan al crear).',
+            image: img('/manuals/recorridos/hotspot-1.png'),
+          },
+          {
+            title: 'Agregar punto interactivo',
+            body: 'Pulsa Agregar punto interactivo. Elige el tipo (Escena, Info, Media o Enlace), título y, si aplica, escena destino o URL.',
+            image: img('/manuals/recorridos/hotspot-2.png'),
+          },
+          {
+            title: 'Guardar el punto',
+            body: 'Confirma con Guardar punto interactivo. Aparecerá en la lista de la escena y se podrá editar o eliminar después.',
+            image: img('/manuals/recorridos/hotspot-3.png'),
+          },
+        ],
+      },
+    ],
+  },
   {
     id: 'usuarios',
     title: 'Usuarios',
