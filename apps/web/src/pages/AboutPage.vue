@@ -75,6 +75,50 @@ onMounted(async () => {
       </div>
     </section>
 
+    <section v-if="sliderImages.length" class="about-gallery">
+      <div class="ma-container about-gallery__header">
+        <h2 class="ma-heading">Nuestro Equipo</h2>
+        <div class="ma-divider" />
+      </div>
+
+      <div class="about-gallery__stage">
+        <q-carousel
+          v-model="slide"
+          animated
+          infinite
+          swipeable
+          navigation
+          arrows
+          transition-prev="fade"
+          transition-next="fade"
+          :autoplay="5500"
+          control-color="primary"
+          class="about-carousel"
+          height="auto"
+        >
+          <q-carousel-slide
+            v-for="(image, index) in sliderImages"
+            :key="image.id"
+            :name="index"
+            class="about-carousel__slide"
+          >
+            <figure class="about-carousel__frame">
+              <img
+                class="about-carousel__img"
+                :src="image.url"
+                :alt="image.title || `Imagen ${index + 1}`"
+                loading="lazy"
+                decoding="async"
+              />
+              <figcaption v-if="image.title" class="about-carousel__caption">
+                {{ image.title }}
+              </figcaption>
+            </figure>
+          </q-carousel-slide>
+        </q-carousel>
+      </div>
+    </section>
+
     <section v-if="showPillars" class="ma-section ma-section--dark">
       <div class="ma-container about-pillars">
         <article v-if="showMission" class="about-pillars__item">
@@ -98,48 +142,6 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section v-if="sliderImages.length" class="about-gallery">
-      <div class="ma-container about-gallery__header">
-        <p class="ma-eyebrow">Equipo</p>
-        <h2 class="ma-heading">Imágenes sobre Nosotros</h2>
-        <div class="ma-divider" />
-      </div>
-
-      <div class="about-gallery__stage">
-        <q-carousel
-          v-model="slide"
-          animated
-          infinite
-          swipeable
-          navigation
-          arrows
-          transition-prev="fade"
-          transition-next="fade"
-          :autoplay="5000"
-          control-color="primary"
-          class="about-carousel"
-          height="min(72vh, 620px)"
-        >
-          <q-carousel-slide
-            v-for="(image, index) in sliderImages"
-            :key="image.id"
-            :name="index"
-            class="about-carousel__slide"
-          >
-            <div
-              class="about-carousel__image"
-              :style="{ backgroundImage: `url('${image.url}')` }"
-              :aria-label="image.title || `Imagen ${index + 1}`"
-              role="img"
-            />
-            <div v-if="image.title" class="about-carousel__caption">
-              {{ image.title }}
-            </div>
-          </q-carousel-slide>
-        </q-carousel>
-      </div>
-    </section>
-
     <section class="ma-section ma-section--cream">
       <div class="ma-container about-cta">
         <h2 class="ma-heading">Construyamos algo extraordinario juntos</h2>
@@ -154,7 +156,7 @@ onMounted(async () => {
   position: relative;
   min-height: 65vh;
   background-size: cover;
-  background-position: center 18%;
+  background-position: center;
   background-repeat: no-repeat;
   display: flex;
   align-items: flex-end;
@@ -176,7 +178,6 @@ onMounted(async () => {
 @media (max-width: 800px) {
   .about-hero {
     min-height: 52vh;
-    background-position: center 12%;
   }
 }
 
@@ -274,28 +275,34 @@ onMounted(async () => {
 
 .about-gallery {
   background: var(--ma-cream);
-  padding-block: var(--ma-section-pad) 0;
+  padding-block: var(--ma-section-pad);
 
   &__header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     max-width: 36rem;
   }
 
   &__stage {
-    width: 100%;
+    width: min(1120px, calc(100% - 2rem));
+    margin-inline: auto;
   }
 }
 
 .about-carousel {
   background: transparent;
+  overflow: visible;
+
+  :deep(.q-carousel__slides-container),
+  :deep(.q-carousel__slide) {
+    overflow: visible;
+  }
 
   :deep(.q-carousel__control) {
-    color: var(--ma-cream);
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+    color: var(--ma-charcoal);
   }
 
   :deep(.q-carousel__navigation .q-btn) {
-    opacity: 0.55;
+    opacity: 0.45;
   }
 
   :deep(.q-carousel__navigation .q-btn--active),
@@ -306,45 +313,48 @@ onMounted(async () => {
 
   :deep(.q-carousel__prev-arrow),
   :deep(.q-carousel__next-arrow) {
-    background: rgba(17, 17, 17, 0.35);
-    backdrop-filter: blur(4px);
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid var(--ma-border);
     border-radius: 999px;
-    margin: 0 1rem;
+    margin: 0 0.35rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   }
 
   &__slide {
-    padding: 0;
+    padding: 0 0 2.75rem;
+  }
+
+  &__frame {
+    position: relative;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(320px, 58vh, 640px);
+    background: #ece7e0;
+    border: 1px solid var(--ma-border);
     overflow: hidden;
   }
 
-  &__image {
+  &__img {
+    display: block;
     width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    transform: scale(1.02);
-    animation: about-kenburns 12s ease-in-out infinite alternate;
+    height: auto;
+    max-height: clamp(320px, 58vh, 640px);
+    object-fit: contain;
+    object-position: center;
+    image-rendering: auto;
   }
 
   &__caption {
     position: absolute;
-    left: 1.5rem;
-    bottom: 1.5rem;
-    padding: 0.55rem 0.9rem;
-    background: rgba(17, 17, 17, 0.55);
+    left: 1rem;
+    bottom: 1rem;
+    padding: 0.45rem 0.8rem;
+    background: rgba(17, 17, 17, 0.58);
     color: var(--ma-cream);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     letter-spacing: 0.04em;
-    backdrop-filter: blur(6px);
-  }
-}
-
-@keyframes about-kenburns {
-  from {
-    transform: scale(1.02);
-  }
-  to {
-    transform: scale(1.08);
   }
 }
 
@@ -361,8 +371,15 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
+  .about-gallery__stage {
+    width: 100%;
+  }
+
   .about-carousel {
-    height: 48vh !important;
+    :deep(.q-carousel__prev-arrow),
+    :deep(.q-carousel__next-arrow) {
+      display: none;
+    }
   }
 }
 </style>
