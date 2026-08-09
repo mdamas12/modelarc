@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\Admin\TestimonialController;
 use App\Http\Controllers\Api\Admin\TestimonialInvitationController as AdminTestimonialInvitationController;
 use App\Http\Controllers\Api\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Admin\WeAreController as AdminWeAreController;
+use App\Http\Controllers\Api\Admin\WeAreTeamController;
 use App\Http\Controllers\Api\Website\ContactController;
 use App\Http\Controllers\Api\Website\GalleryController;
 use App\Http\Controllers\Api\Website\HomeController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\Api\Website\ProjectController;
 use App\Http\Controllers\Api\Website\ServiceController;
 use App\Http\Controllers\Api\Website\TestimonialInvitationController as PublicTestimonialInvitationController;
 use App\Http\Controllers\Api\Website\TourController;
+use App\Http\Controllers\Api\Website\WeAreController as PublicWeAreController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('public')->group(function () {
@@ -35,6 +38,7 @@ Route::prefix('public')->group(function () {
     Route::get('projects/{slug}/tour', [ProjectController::class, 'tour']);
     Route::get('services', [ServiceController::class, 'index']);
     Route::get('services/{slug}', [ServiceController::class, 'show']);
+    Route::get('we-are', PublicWeAreController::class);
     Route::get('tours/{slug}', [TourController::class, 'show']);
     Route::get('testimonial-invitations/{token}', [PublicTestimonialInvitationController::class, 'show']);
     Route::post('testimonial-invitations/{token}', [PublicTestimonialInvitationController::class, 'submit']);
@@ -94,6 +98,13 @@ Route::prefix('admin')->group(function () {
 
         Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
         Route::apiResource('services', AdminServiceController::class);
+
+        Route::get('we-are', [AdminWeAreController::class, 'show']);
+        Route::put('we-are', [AdminWeAreController::class, 'update']);
+        Route::post('we-are/team', [WeAreTeamController::class, 'store']);
+        Route::post('we-are/team/{weAreTeam}', [WeAreTeamController::class, 'update']);
+        Route::delete('we-are/team/{weAreTeam}', [WeAreTeamController::class, 'destroy']);
+
         Route::apiResource('testimonials', TestimonialController::class);
         Route::get('testimonial-invitations', [AdminTestimonialInvitationController::class, 'index']);
         Route::post('testimonial-invitations', [AdminTestimonialInvitationController::class, 'store']);

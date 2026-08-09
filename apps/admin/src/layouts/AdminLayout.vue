@@ -124,6 +124,7 @@ const menuSections = [
       { label: 'Recorridos 360°', icon: 'panorama_photosphere', to: '/recorridos' },
       { label: 'Galería de medios', icon: 'photo_library', to: '/medios' },
       { label: 'Servicios', icon: 'handyman', to: '/servicios' },
+      { label: 'Quiénes somos', icon: 'groups', to: '/quienes-somos' },
       { label: 'Testimonios', icon: 'format_quote', to: '/testimonios' },
       { label: 'Solicitudes', icon: 'mail_outline', to: '/solicitudes' },
     ],

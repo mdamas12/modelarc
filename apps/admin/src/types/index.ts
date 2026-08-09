@@ -198,6 +198,33 @@ export interface SiteSetting {
   updated_at?: string
 }
 
+export interface WeAre {
+  id: number
+  title: string
+  description?: string | null
+  vision?: string | null
+  mission?: string | null
+  values?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface WeAreTeam {
+  id: number
+  path: string
+  url?: string | null
+  title?: string | null
+  order: number
+  published: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface WeArePayload {
+  we_are: WeAre
+  teams: WeAreTeam[]
+}
+
 export interface DashboardData {
   projects_total: number
   projects_published: number

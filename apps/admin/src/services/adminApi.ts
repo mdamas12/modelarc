@@ -13,6 +13,9 @@ import type {
   TourScene,
   User,
   VirtualTour,
+  WeAre,
+  WeArePayload,
+  WeAreTeam,
 } from '@/types'
 
 function unwrapData<T>(payload: { data: T } | T): T {
@@ -226,6 +229,34 @@ export const adminApi = {
 
   async deleteService(id: number | string) {
     await api.delete(`/admin/services/${id}`)
+  },
+
+  async weAre() {
+    const { data } = await api.get('/admin/we-are')
+    return unwrapData<WeArePayload>(data)
+  },
+
+  async updateWeAre(payload: Record<string, unknown>) {
+    const { data } = await api.put('/admin/we-are', payload)
+    return unwrapData<WeAre>(data)
+  },
+
+  async createWeAreTeam(form: FormData) {
+    const { data } = await api.post('/admin/we-are/team', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return unwrapData<WeAreTeam>(data)
+  },
+
+  async updateWeAreTeam(id: number | string, form: FormData) {
+    const { data } = await api.post(`/admin/we-are/team/${id}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return unwrapData<WeAreTeam>(data)
+  },
+
+  async deleteWeAreTeam(id: number | string) {
+    await api.delete(`/admin/we-are/team/${id}`)
   },
 
   async testimonials() {

@@ -79,6 +79,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Servicios' },
       },
       {
+        path: 'quienes-somos',
+        name: 'we-are',
+        component: () => import('@/pages/WeArePage.vue'),
+        meta: { title: 'Quiénes somos' },
+      },
+      {
         path: 'testimonios',
         name: 'testimonials',
         component: () => import('@/pages/TestimonialsPage.vue'),

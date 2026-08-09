@@ -14,6 +14,7 @@ use App\Models\TourHotspot;
 use App\Models\TourScene;
 use App\Models\User;
 use App\Models\VirtualTour;
+use App\Models\WeAre;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -397,5 +398,7 @@ class DatabaseSeeder extends Seeder
                 ['value' => $payload['value']]
             );
         }
+
+        WeAre::singleton();
     }
 }
