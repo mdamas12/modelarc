@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import SectionHeader from '@/components/common/SectionHeader.vue'
 import {
   fetchAbout,
@@ -15,6 +15,7 @@ const error = ref<string | null>(null)
 const weAre = ref<WeAreContent | null>(null)
 const teams = ref<WeAreTeamImage[]>([])
 const slide = ref(0)
+let timer: ReturnType<typeof setInterval> | null = null
 
 const heroImage = computed(() => {
   const byOrder = teams.value.find((t) => t.order === 1 && t.url)
@@ -26,6 +27,45 @@ const showVision = computed(() => hasRichText(weAre.value?.vision))
 const showValues = computed(() => hasRichText(weAre.value?.values))
 const showPillars = computed(() => showMission.value || showVision.value || showValues.value)
 const sliderImages = computed(() => teams.value.filter((t) => t.url))
+
+function goTo(index: number) {
+  const total = sliderImages.value.length
+  if (!total) return
+  slide.value = ((index % total) + total) % total
+  restartAutoplay()
+}
+
+function next() {
+  goTo(slide.value + 1)
+}
+
+function prev() {
+  goTo(slide.value - 1)
+}
+
+function stopAutoplay() {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+}
+
+function startAutoplay() {
+  stopAutoplay()
+  if (sliderImages.value.length < 2) return
+  timer = setInterval(() => {
+    slide.value = (slide.value + 1) % sliderImages.value.length
+  }, 5500)
+}
+
+function restartAutoplay() {
+  startAutoplay()
+}
+
+watch(sliderImages, () => {
+  slide.value = 0
+  startAutoplay()
+})
 
 onMounted(async () => {
   loading.value = true
@@ -40,8 +80,11 @@ onMounted(async () => {
     teams.value = []
   } finally {
     loading.value = false
+    startAutoplay()
   }
 })
+
+onUnmounted(stopAutoplay)
 </script>
 
 <template>
@@ -75,47 +118,67 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section v-if="sliderImages.length" class="about-gallery">
+    <section
+      v-if="sliderImages.length"
+      class="about-gallery"
+      @mouseenter="stopAutoplay"
+      @mouseleave="startAutoplay"
+    >
       <div class="ma-container about-gallery__header">
-        <h2 class="ma-heading">Nuestro Equipo</h2>
+        <h2 class="ma-heading about-gallery__title">Nuestro Equipo</h2>
         <div class="ma-divider" />
       </div>
 
-      <div class="about-gallery__stage">
-        <q-carousel
-          v-model="slide"
-          animated
-          infinite
-          swipeable
-          navigation
-          arrows
-          transition-prev="fade"
-          transition-next="fade"
-          :autoplay="5500"
-          control-color="primary"
-          class="about-carousel"
-          height="auto"
-        >
-          <q-carousel-slide
+      <div class="about-gallery__viewport">
+        <div class="about-gallery__track">
+          <figure
             v-for="(image, index) in sliderImages"
             :key="image.id"
-            :name="index"
-            class="about-carousel__slide"
+            class="about-gallery__slide"
+            :class="{ 'about-gallery__slide--active': index === slide }"
+            :aria-hidden="index !== slide"
           >
-            <figure class="about-carousel__frame">
-              <img
-                class="about-carousel__img"
-                :src="image.url"
-                :alt="image.title || `Imagen ${index + 1}`"
-                loading="lazy"
-                decoding="async"
-              />
-              <figcaption v-if="image.title" class="about-carousel__caption">
-                {{ image.title }}
-              </figcaption>
-            </figure>
-          </q-carousel-slide>
-        </q-carousel>
+            <img
+              :src="image.url"
+              :alt="image.title || `Imagen ${index + 1}`"
+              class="about-gallery__img"
+              :loading="index === 0 ? 'eager' : 'lazy'"
+              decoding="async"
+            />
+          </figure>
+        </div>
+
+        <template v-if="sliderImages.length > 1">
+          <button
+            type="button"
+            class="about-gallery__nav about-gallery__nav--prev"
+            aria-label="Anterior"
+            @click="prev"
+          >
+            <q-icon name="chevron_left" size="28px" />
+          </button>
+          <button
+            type="button"
+            class="about-gallery__nav about-gallery__nav--next"
+            aria-label="Siguiente"
+            @click="next"
+          >
+            <q-icon name="chevron_right" size="28px" />
+          </button>
+
+          <div class="about-gallery__dots" role="tablist" aria-label="Imágenes del equipo">
+            <button
+              v-for="(image, index) in sliderImages"
+              :key="`dot-${image.id}`"
+              type="button"
+              class="about-gallery__dot"
+              :class="{ 'about-gallery__dot--active': index === slide }"
+              :aria-label="`Ir a imagen ${index + 1}`"
+              :aria-selected="index === slide"
+              @click="goTo(index)"
+            />
+          </div>
+        </template>
       </div>
     </section>
 
@@ -278,83 +341,108 @@ onMounted(async () => {
   padding-block: var(--ma-section-pad);
 
   &__header {
-    margin-bottom: 2rem;
-    max-width: 36rem;
+    margin-bottom: 2.25rem;
   }
 
-  &__stage {
-    width: min(1120px, calc(100% - 2rem));
+  &__title {
+    margin: 0;
+  }
+
+  &__viewport {
+    position: relative;
+    width: min(1180px, calc(100% - 2.5rem));
     margin-inline: auto;
   }
-}
 
-.about-carousel {
-  background: transparent;
-  overflow: visible;
-
-  :deep(.q-carousel__slides-container),
-  :deep(.q-carousel__slide) {
-    overflow: visible;
-  }
-
-  :deep(.q-carousel__control) {
-    color: var(--ma-charcoal);
-  }
-
-  :deep(.q-carousel__navigation .q-btn) {
-    opacity: 0.45;
-  }
-
-  :deep(.q-carousel__navigation .q-btn--active),
-  :deep(.q-carousel__navigation .q-btn:hover) {
-    opacity: 1;
-    color: var(--ma-gold);
-  }
-
-  :deep(.q-carousel__prev-arrow),
-  :deep(.q-carousel__next-arrow) {
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid var(--ma-border);
-    border-radius: 999px;
-    margin: 0 0.35rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  &__track {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: #111;
   }
 
   &__slide {
-    padding: 0 0 2.75rem;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 0.85s ease;
+    pointer-events: none;
   }
 
-  &__frame {
-    position: relative;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: clamp(320px, 58vh, 640px);
-    background: #ece7e0;
-    border: 1px solid var(--ma-border);
-    overflow: hidden;
+  &__slide--active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
   }
 
   &__img {
-    display: block;
     width: 100%;
-    height: auto;
-    max-height: clamp(320px, 58vh, 640px);
-    object-fit: contain;
-    object-position: center;
-    image-rendering: auto;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
   }
 
-  &__caption {
+  &__nav {
     position: absolute;
+    top: 50%;
+    z-index: 3;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ma-charcoal);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+
+  &__nav:hover {
+    background: var(--ma-gold);
+    color: var(--ma-charcoal-deep);
+  }
+
+  &__nav--prev {
     left: 1rem;
-    bottom: 1rem;
-    padding: 0.45rem 0.8rem;
-    background: rgba(17, 17, 17, 0.58);
-    color: var(--ma-cream);
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
+  }
+
+  &__nav--next {
+    right: 1rem;
+  }
+
+  &__dots {
+    position: absolute;
+    left: 50%;
+    bottom: 1.1rem;
+    z-index: 3;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(17, 17, 17, 0.28);
+    backdrop-filter: blur(6px);
+  }
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: width 0.2s ease, background 0.2s ease;
+  }
+
+  &__dot--active {
+    width: 22px;
+    background: var(--ma-gold);
   }
 }
 
@@ -371,14 +459,30 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
-  .about-gallery__stage {
-    width: 100%;
-  }
+  .about-gallery {
+    &__viewport {
+      width: 100%;
+    }
 
-  .about-carousel {
-    :deep(.q-carousel__prev-arrow),
-    :deep(.q-carousel__next-arrow) {
-      display: none;
+    &__track {
+      aspect-ratio: 4 / 5;
+    }
+
+    &__img {
+      object-position: center 22%;
+    }
+
+    &__nav {
+      width: 38px;
+      height: 38px;
+    }
+
+    &__nav--prev {
+      left: 0.65rem;
+    }
+
+    &__nav--next {
+      right: 0.65rem;
     }
   }
 }
