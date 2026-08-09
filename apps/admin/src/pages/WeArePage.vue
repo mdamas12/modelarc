@@ -77,13 +77,8 @@
 
       <div class="admin-card q-pa-md">
         <div class="team-header">
-          <div>
-            <h2 class="section-title">Equipo</h2>
-            <p class="section-hint">
-              Miniaturas horizontales · arrastra para reordenar · clic en + para agregar
-            </p>
-          </div>
-          <div class="text-caption text-grey-6" v-if="uploadingCount">
+          <h2 class="section-title">Imágenes sobre Nosotros</h2>
+          <div v-if="uploadingCount" class="text-caption text-grey-6">
             Subiendo {{ uploadingCount }}…
           </div>
         </div>
@@ -107,7 +102,7 @@
             <img
               v-if="item.url"
               :src="item.url"
-              :alt="item.title || `Equipo ${index + 1}`"
+              :alt="item.title || `Imagen ${index + 1}`"
               class="team-thumb__img"
               draggable="false"
             />
@@ -273,28 +268,46 @@ async function onTeamFilesSelected(event: Event) {
   const input = event.target as HTMLInputElement
   const files = Array.from(input.files || []).filter((f) => f.type.startsWith('image/'))
   input.value = ''
-  if (!files.length) return
+  if (!files.length) {
+    $q.notify({ type: 'warning', message: 'Selecciona una imagen válida (JPG, PNG o WEBP)' })
+    return
+  }
 
   uploadingCount.value = files.length
   let ok = 0
+  let lastError = ''
   try {
     for (const file of files) {
       const data = new FormData()
       data.append('image', file)
       data.append('published', '1')
       data.append('order', String(teams.value.length + 1))
-      const created = await adminApi.createWeAreTeam(data)
-      teams.value = [...teams.value, created]
-      ok += 1
-      uploadingCount.value = files.length - ok
+      try {
+        const created = await adminApi.createWeAreTeam(data)
+        teams.value = [...teams.value, created]
+        ok += 1
+      } catch (err: unknown) {
+        const axiosErr = err as {
+          response?: { data?: { message?: string; errors?: Record<string, string[]> } }
+        }
+        const errors = axiosErr.response?.data?.errors
+        lastError =
+          (errors && Object.values(errors).flat()[0]) ||
+          axiosErr.response?.data?.message ||
+          `No se pudo subir ${file.name}`
+      }
+      uploadingCount.value = files.length - ok - (lastError ? 1 : 0)
     }
-    $q.notify({
-      type: 'positive',
-      message: ok === 1 ? 'Imagen agregada' : `${ok} imágenes agregadas`,
-    })
-  } catch {
-    $q.notify({ type: 'negative', message: 'Error al subir una o más imágenes' })
-    await load()
+    if (ok) {
+      $q.notify({
+        type: 'positive',
+        message: ok === 1 ? 'Imagen agregada' : `${ok} imágenes agregadas`,
+      })
+    }
+    if (lastError) {
+      $q.notify({ type: 'negative', message: lastError })
+      if (!ok) await load()
+    }
   } finally {
     uploadingCount.value = 0
   }

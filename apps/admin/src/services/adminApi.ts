@@ -243,14 +243,14 @@ export const adminApi = {
 
   async createWeAreTeam(form: FormData) {
     const { data } = await api.post('/admin/we-are/team', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
     })
     return unwrapData<WeAreTeam>(data)
   },
 
   async updateWeAreTeam(id: number | string, form: FormData) {
     const { data } = await api.post(`/admin/we-are/team/${id}`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 5 * 60 * 1000,
     })
     return unwrapData<WeAreTeam>(data)
   },
