@@ -10,8 +10,12 @@ declare module 'vue' {
 
 const TOKEN_KEY = 'modelarc_admin_token'
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://api.modelarcve.com/api' : 'http://localhost:8000/api')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: apiBaseUrl,
   headers: {
     Accept: 'application/json',
   },

@@ -4,6 +4,7 @@ node_modules
 
 # .env files
 .env*
+!.env.production.example
 
 # Quasar core related directories
 .quasar

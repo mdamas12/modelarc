@@ -8,8 +8,12 @@ declare module 'vue' {
   }
 }
 
+const apiBaseUrl =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://api.modelarcve.com/api' : 'http://localhost:8000/api')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: apiBaseUrl,
   timeout: 12000,
   headers: {
     Accept: 'application/json',
