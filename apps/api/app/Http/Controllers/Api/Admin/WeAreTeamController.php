@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ReorderWeAreTeamRequest;
 use App\Http\Requests\Admin\StoreWeAreTeamRequest;
 use App\Http\Requests\Admin\UpdateWeAreTeamRequest;
 use App\Http\Resources\WeAreTeamResource;
@@ -46,6 +47,17 @@ class WeAreTeamController extends Controller
         $weAreTeam->update($data);
 
         return new WeAreTeamResource($weAreTeam->fresh());
+    }
+
+    public function reorder(ReorderWeAreTeamRequest $request): JsonResponse
+    {
+        foreach ($request->validated('ids') as $index => $id) {
+            WeAreTeam::query()->whereKey($id)->update(['order' => $index + 1]);
+        }
+
+        return response()->json([
+            'data' => ['message' => 'Orden actualizado.'],
+        ]);
     }
 
     public function destroy(WeAreTeam $weAreTeam): JsonResponse

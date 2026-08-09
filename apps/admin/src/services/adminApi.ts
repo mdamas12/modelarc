@@ -255,6 +255,11 @@ export const adminApi = {
     return unwrapData<WeAreTeam>(data)
   },
 
+  async reorderWeAreTeam(ids: number[]) {
+    const { data } = await api.post('/admin/we-are/team/reorder', { ids })
+    return unwrapData<{ message: string }>(data)
+  },
+
   async deleteWeAreTeam(id: number | string) {
     await api.delete(`/admin/we-are/team/${id}`)
   },

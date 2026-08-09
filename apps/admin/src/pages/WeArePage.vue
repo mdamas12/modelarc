@@ -79,157 +79,111 @@
         <div class="team-header">
           <div>
             <h2 class="section-title">Equipo</h2>
-            <p class="section-hint">Imágenes que se muestran en la página Nosotros</p>
+            <p class="section-hint">
+              Miniaturas horizontales · arrastra para reordenar · clic en + para agregar
+            </p>
           </div>
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            icon="add"
-            label="Agregar imagen"
-            @click="openCreateTeam"
-          />
+          <div class="text-caption text-grey-6" v-if="uploadingCount">
+            Subiendo {{ uploadingCount }}…
+          </div>
         </div>
 
-        <div v-if="!teams.length" class="text-grey-7 text-center q-pa-xl">
-          Aún no hay imágenes del equipo.
-        </div>
-
-        <div v-else class="team-list">
-          <article v-for="item in teams" :key="item.id" class="team-card">
-            <div class="team-card__identity">
-              <div class="team-card__thumb">
-                <img v-if="item.url" :src="item.url" :alt="item.title || 'Equipo'" />
-                <q-icon v-else name="groups" size="28px" color="primary" />
-              </div>
-              <div class="team-card__titles">
-                <h3 class="team-card__name">{{ item.title || 'Sin título' }}</h3>
-                <p class="team-card__slug">Orden {{ item.order }}</p>
-              </div>
+        <div class="team-strip" @dragover.prevent>
+          <article
+            v-for="(item, index) in teams"
+            :key="item.id"
+            class="team-thumb"
+            :class="{
+              'team-thumb--dragging': dragFrom === index,
+              'team-thumb--over': dragOver === index && dragFrom !== index,
+              'team-thumb--unpublished': !item.published,
+            }"
+            draggable="true"
+            @dragstart="onDragStart(index, $event)"
+            @dragenter.prevent="onDragEnter(index)"
+            @dragend="onDragEnd"
+            @drop.prevent="onDrop(index)"
+          >
+            <img
+              v-if="item.url"
+              :src="item.url"
+              :alt="item.title || `Equipo ${index + 1}`"
+              class="team-thumb__img"
+              draggable="false"
+            />
+            <div v-else class="team-thumb__empty">
+              <q-icon name="image" size="28px" />
             </div>
 
-            <div class="team-card__field">
-              <span class="team-card__label">Orden</span>
-              <div class="team-card__value">
-                <q-icon name="sort" size="16px" />
-                <span>{{ item.order }}</span>
-              </div>
-            </div>
+            <div class="team-thumb__order">{{ index + 1 }}</div>
 
-            <div class="team-card__status">
-              <span class="team-card__label">Estado</span>
-              <div
-                class="team-card__badge"
-                :class="
-                  item.published
-                    ? 'team-card__badge--active'
-                    : 'team-card__badge--inactive'
-                "
+            <div class="team-thumb__actions">
+              <button
+                type="button"
+                class="team-thumb__btn"
+                :title="item.published ? 'Ocultar en la web' : 'Publicar en la web'"
+                :disabled="busyId === item.id"
+                @click.stop="togglePublished(item)"
               >
-                <q-icon
-                  :name="item.published ? 'visibility' : 'visibility_off'"
-                  size="16px"
-                />
-                <span>{{ item.published ? 'Publicada' : 'Oculta' }}</span>
-              </div>
+                <q-icon :name="item.published ? 'visibility' : 'visibility_off'" size="16px" />
+              </button>
+              <button
+                type="button"
+                class="team-thumb__btn team-thumb__btn--danger"
+                title="Eliminar"
+                :disabled="busyId === item.id"
+                @click.stop="removeTeam(item.id)"
+              >
+                <q-icon name="close" size="16px" />
+              </button>
             </div>
 
-            <div class="team-card__actions">
-              <q-btn
-                unelevated
-                no-caps
-                dense
-                color="primary"
-                class="team-card__btn"
-                icon="edit"
-                label="Editar"
-                @click="openEditTeam(item)"
-              />
-              <q-btn
-                outline
-                no-caps
-                dense
-                :color="item.published ? 'grey-8' : 'positive'"
-                class="team-card__btn"
-                :icon="item.published ? 'visibility_off' : 'visibility'"
-                :label="item.published ? 'Ocultar' : 'Publicar'"
-                :loading="togglingId === item.id"
-                @click="togglePublished(item)"
-              />
-              <q-btn
-                outline
-                no-caps
-                dense
-                color="negative"
-                class="team-card__btn team-card__btn--danger"
-                icon="delete"
-                label="Eliminar"
-                @click="removeTeam(item.id)"
-              />
+            <div class="team-thumb__move">
+              <button
+                type="button"
+                class="team-thumb__btn"
+                title="Mover a la izquierda"
+                :disabled="index === 0 || reordering"
+                @click.stop="moveItem(index, -1)"
+              >
+                <q-icon name="chevron_left" size="18px" />
+              </button>
+              <button
+                type="button"
+                class="team-thumb__btn"
+                title="Mover a la derecha"
+                :disabled="index === teams.length - 1 || reordering"
+                @click.stop="moveItem(index, 1)"
+              >
+                <q-icon name="chevron_right" size="18px" />
+              </button>
             </div>
           </article>
+
+          <button
+            type="button"
+            class="team-thumb team-thumb--add"
+            :disabled="uploadingCount > 0"
+            @click="teamImageInput?.click()"
+          >
+            <q-spinner v-if="uploadingCount" color="primary" size="28px" />
+            <template v-else>
+              <q-icon name="add_photo_alternate" size="32px" color="primary" />
+              <span>Agregar</span>
+            </template>
+          </button>
+
+          <input
+            ref="teamImageInput"
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            @change="onTeamFilesSelected"
+          />
         </div>
       </div>
     </template>
-
-    <q-dialog v-model="teamDialog" persistent>
-      <q-card style="min-width: 420px; max-width: 520px">
-        <q-card-section>
-          <div class="text-h6">{{ editingTeamId ? 'Editar imagen' : 'Nueva imagen' }}</div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <div>
-            <div class="text-caption text-grey-7 q-mb-xs">
-              Imagen {{ editingTeamId ? '' : '*' }}
-            </div>
-            <div class="team-image-upload">
-              <div class="team-image-upload__preview">
-                <img v-if="teamPreviewUrl" :src="teamPreviewUrl" alt="Vista previa" />
-                <div v-else class="team-image-upload__empty">
-                  <q-icon name="image" size="32px" color="grey-5" />
-                  <span>Sin imagen</span>
-                </div>
-              </div>
-              <div class="team-image-upload__actions">
-                <q-btn
-                  outline
-                  no-caps
-                  color="primary"
-                  icon="cloud_upload"
-                  :label="editingTeamId ? 'Cambiar imagen' : 'Subir imagen'"
-                  @click="teamImageInput?.click()"
-                />
-                <div class="text-caption text-grey-6">
-                  JPG, PNG o WEBP. Máx. 10 MB.
-                </div>
-              </div>
-              <input
-                ref="teamImageInput"
-                type="file"
-                accept="image/*"
-                hidden
-                @change="onTeamImageSelected"
-              />
-            </div>
-          </div>
-
-          <q-input v-model="teamForm.title" outlined label="Título descriptivo" />
-          <q-input v-model.number="teamForm.order" outlined type="number" label="Orden" />
-          <q-toggle v-model="teamForm.published" label="Publicada en la web" color="primary" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps label="Cancelar" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            label="Guardar"
-            :loading="savingTeam"
-            @click="saveTeam"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -242,14 +196,13 @@ import type { WeAreTeam } from '@/types'
 const $q = useQuasar()
 const loading = ref(false)
 const savingInfo = ref(false)
-const savingTeam = ref(false)
-const togglingId = ref<number | null>(null)
-const teamDialog = ref(false)
-const editingTeamId = ref<number | null>(null)
+const uploadingCount = ref(0)
+const reordering = ref(false)
+const busyId = ref<number | null>(null)
 const teams = ref<WeAreTeam[]>([])
 const teamImageInput = ref<HTMLInputElement | null>(null)
-const teamPreviewUrl = ref<string | null>(null)
-const pendingTeamFile = ref<File | null>(null)
+const dragFrom = ref<number | null>(null)
+const dragOver = ref<number | null>(null)
 
 const form = reactive({
   title: '',
@@ -257,12 +210,6 @@ const form = reactive({
   vision: '',
   mission: '',
   values: '',
-})
-
-const teamForm = reactive({
-  title: '',
-  order: 0,
-  published: true,
 })
 
 const htmlToolbar = [
@@ -322,110 +269,126 @@ async function saveInfo() {
   }
 }
 
-function openCreateTeam() {
-  editingTeamId.value = null
-  teamForm.title = ''
-  teamForm.order = teams.value.length
-    ? Math.max(...teams.value.map((t) => t.order)) + 1
-    : 1
-  teamForm.published = true
-  pendingTeamFile.value = null
-  teamPreviewUrl.value = null
-  teamDialog.value = true
-}
-
-function openEditTeam(item: WeAreTeam) {
-  editingTeamId.value = item.id
-  teamForm.title = item.title || ''
-  teamForm.order = item.order
-  teamForm.published = item.published
-  pendingTeamFile.value = null
-  teamPreviewUrl.value = item.url || null
-  teamDialog.value = true
-}
-
-function onTeamImageSelected(event: Event) {
+async function onTeamFilesSelected(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-  pendingTeamFile.value = file
-  if (teamPreviewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(teamPreviewUrl.value)
-  }
-  teamPreviewUrl.value = URL.createObjectURL(file)
+  const files = Array.from(input.files || []).filter((f) => f.type.startsWith('image/'))
   input.value = ''
-}
+  if (!files.length) return
 
-function buildTeamFormData() {
-  const data = new FormData()
-  if (pendingTeamFile.value) {
-    data.append('image', pendingTeamFile.value)
-  }
-  if (teamForm.title) {
-    data.append('title', teamForm.title)
-  }
-  data.append('order', String(teamForm.order ?? 0))
-  data.append('published', teamForm.published ? '1' : '0')
-  return data
-}
-
-async function saveTeam() {
-  if (!editingTeamId.value && !pendingTeamFile.value) {
-    $q.notify({ type: 'warning', message: 'Debes subir una imagen' })
-    return
-  }
-
-  savingTeam.value = true
+  uploadingCount.value = files.length
+  let ok = 0
   try {
-    const payload = buildTeamFormData()
-    if (editingTeamId.value) {
-      await adminApi.updateWeAreTeam(editingTeamId.value, payload)
-    } else {
-      await adminApi.createWeAreTeam(payload)
+    for (const file of files) {
+      const data = new FormData()
+      data.append('image', file)
+      data.append('published', '1')
+      data.append('order', String(teams.value.length + 1))
+      const created = await adminApi.createWeAreTeam(data)
+      teams.value = [...teams.value, created]
+      ok += 1
+      uploadingCount.value = files.length - ok
     }
-    teamDialog.value = false
-    $q.notify({ type: 'positive', message: 'Imagen guardada' })
-    await load()
+    $q.notify({
+      type: 'positive',
+      message: ok === 1 ? 'Imagen agregada' : `${ok} imágenes agregadas`,
+    })
   } catch {
-    $q.notify({ type: 'negative', message: 'Error al guardar la imagen' })
+    $q.notify({ type: 'negative', message: 'Error al subir una o más imágenes' })
+    await load()
   } finally {
-    savingTeam.value = false
+    uploadingCount.value = 0
   }
+}
+
+async function persistOrder(next: WeAreTeam[]) {
+  teams.value = next
+  reordering.value = true
+  try {
+    await adminApi.reorderWeAreTeam(next.map((t) => t.id))
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo reordenar' })
+    await load()
+  } finally {
+    reordering.value = false
+  }
+}
+
+async function moveItem(index: number, dir: number) {
+  const target = index + dir
+  if (target < 0 || target >= teams.value.length) return
+  const copy = [...teams.value]
+  const [row] = copy.splice(index, 1)
+  if (!row) return
+  copy.splice(target, 0, row)
+  await persistOrder(copy)
+}
+
+function onDragStart(index: number, event: DragEvent) {
+  dragFrom.value = index
+  dragOver.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
+  }
+}
+
+function onDragEnter(index: number) {
+  if (dragFrom.value === null) return
+  dragOver.value = index
+}
+
+async function onDrop(index: number) {
+  const from = dragFrom.value
+  dragFrom.value = null
+  dragOver.value = null
+  if (from === null || from === index) return
+  const copy = [...teams.value]
+  const [row] = copy.splice(from, 1)
+  if (!row) return
+  copy.splice(index, 0, row)
+  await persistOrder(copy)
+}
+
+function onDragEnd() {
+  dragFrom.value = null
+  dragOver.value = null
 }
 
 async function togglePublished(item: WeAreTeam) {
-  togglingId.value = item.id
+  busyId.value = item.id
   try {
     const data = new FormData()
     data.append('published', item.published ? '0' : '1')
     data.append('order', String(item.order))
     if (item.title) data.append('title', item.title)
-    await adminApi.updateWeAreTeam(item.id, data)
-    $q.notify({
-      type: 'positive',
-      message: item.published ? 'Imagen ocultada' : 'Imagen publicada',
-    })
-    await load()
+    const updated = await adminApi.updateWeAreTeam(item.id, data)
+    teams.value = teams.value.map((row) => (row.id === item.id ? updated : row))
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo actualizar el estado' })
   } finally {
-    togglingId.value = null
+    busyId.value = null
   }
 }
 
 async function removeTeam(id: number) {
   $q.dialog({
     title: 'Eliminar',
-    message: '¿Eliminar esta imagen del equipo?',
+    message: '¿Eliminar esta imagen?',
     cancel: true,
     persistent: true,
   }).onOk(async () => {
+    busyId.value = id
     try {
       await adminApi.deleteWeAreTeam(id)
+      teams.value = teams.value.filter((t) => t.id !== id)
+      if (teams.value.length) {
+        await adminApi.reorderWeAreTeam(teams.value.map((t) => t.id)).catch(() => undefined)
+      }
       $q.notify({ type: 'positive', message: 'Imagen eliminada' })
-      await load()
     } catch {
       $q.notify({ type: 'negative', message: 'Error al eliminar' })
+    } finally {
+      busyId.value = null
     }
   })
 }
@@ -486,192 +449,154 @@ onMounted(load)
   margin-bottom: 1rem;
 }
 
-.team-list {
+.team-strip {
   display: flex;
-  flex-direction: column;
+  align-items: stretch;
   gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.15rem 0.5rem;
+  scrollbar-width: thin;
 }
 
-.team-card {
-  display: grid;
-  grid-template-columns: minmax(200px, 1.5fr) minmax(110px, 0.6fr) auto auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-  background: #fff;
-  border: 1px solid var(--ma-border);
+.team-thumb {
+  position: relative;
+  flex: 0 0 140px;
+  width: 140px;
+  height: 160px;
   border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.team-card__identity {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.team-card__thumb {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  background: #f5f2ed;
-  border: 1px solid var(--ma-border);
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-
-.team-card__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.team-card__titles {
-  min-width: 0;
-}
-
-.team-card__name {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.25;
-}
-
-.team-card__slug {
-  margin: 0.15rem 0 0;
-  font-size: 0.75rem;
-  color: #777;
-}
-
-.team-card__field,
-.team-card__status {
-  min-width: 0;
-}
-
-.team-card__label {
-  display: block;
-  margin-bottom: 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #888;
-}
-
-.team-card__value {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 36px;
-  padding: 0.35rem 0.65rem;
-  border-radius: 8px;
-  background: #f4f4f4;
-  color: #333;
-  font-size: 0.8rem;
-}
-
-.team-card__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 36px;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.team-card__badge--active {
-  background: rgba(46, 125, 50, 0.12);
-  color: #2e7d32;
-}
-
-.team-card__badge--inactive {
-  background: rgba(158, 158, 158, 0.18);
-  color: #616161;
-}
-
-.team-card__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-width: 118px;
-}
-
-.team-card__btn {
-  min-height: 30px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
-.team-card__btn--danger {
-  border-color: rgba(193, 0, 21, 0.35);
-}
-
-.team-image-upload {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 0.85rem;
-  align-items: start;
-}
-
-.team-image-upload__preview {
-  width: 120px;
-  height: 120px;
-  border-radius: 10px;
-  overflow: hidden;
   border: 1px solid var(--ma-border);
   background: #f7f4f0;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
-.team-image-upload__preview img {
+.team-thumb:active {
+  cursor: grabbing;
+}
+
+.team-thumb--dragging {
+  opacity: 0.45;
+}
+
+.team-thumb--over {
+  border-color: var(--q-primary);
+  box-shadow: 0 0 0 2px rgba(166, 137, 102, 0.25);
+}
+
+.team-thumb--unpublished {
+  opacity: 0.72;
+}
+
+.team-thumb__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  pointer-events: none;
 }
 
-.team-image-upload__empty {
+.team-thumb__empty {
   height: 100%;
+  display: grid;
+  place-items: center;
+  color: #aaa;
+}
+
+.team-thumb__order {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.72);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.team-thumb__actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.team-thumb:hover .team-thumb__actions,
+.team-thumb:focus-within .team-thumb__actions {
+  opacity: 1;
+}
+
+.team-thumb__move {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.45));
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.team-thumb:hover .team-thumb__move,
+.team-thumb:focus-within .team-thumb__move {
+  opacity: 1;
+}
+
+.team-thumb__btn {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.team-thumb__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.team-thumb__btn--danger {
+  color: #c10015;
+}
+
+.team-thumb--add {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  color: #999;
-  font-size: 0.75rem;
+  gap: 0.4rem;
+  cursor: pointer;
+  border-style: dashed;
+  border-color: #d2c4b2;
+  background: #faf8f5;
+  color: #666;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
-.team-image-upload__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.45rem;
+.team-thumb--add:hover:not(:disabled) {
+  border-color: var(--q-primary);
+  background: rgba(166, 137, 102, 0.08);
 }
 
-@media (max-width: 1100px) {
-  .team-card {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-
-  .team-card__identity,
-  .team-card__actions {
-    grid-column: 1 / -1;
-  }
-
-  .team-card__actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .team-card__btn {
-    flex: 1;
-  }
+.team-thumb--add:disabled {
+  cursor: wait;
+  opacity: 0.75;
 }
 
 @media (max-width: 600px) {
@@ -679,12 +604,11 @@ onMounted(load)
     flex-direction: column;
   }
 
-  .team-card {
-    grid-template-columns: 1fr;
-  }
-
-  .team-image-upload {
-    grid-template-columns: 1fr;
+  .team-thumb,
+  .team-thumb--add {
+    flex-basis: 120px;
+    width: 120px;
+    height: 140px;
   }
 }
 </style>

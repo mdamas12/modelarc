@@ -102,6 +102,7 @@ Route::prefix('admin')->group(function () {
         Route::get('we-are', [AdminWeAreController::class, 'show']);
         Route::put('we-are', [AdminWeAreController::class, 'update']);
         Route::post('we-are/team', [WeAreTeamController::class, 'store']);
+        Route::post('we-are/team/reorder', [WeAreTeamController::class, 'reorder']);
         Route::post('we-are/team/{weAreTeam}', [WeAreTeamController::class, 'update']);
         Route::delete('we-are/team/{weAreTeam}', [WeAreTeamController::class, 'destroy']);
 
