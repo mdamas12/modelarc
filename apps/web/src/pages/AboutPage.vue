@@ -219,7 +219,7 @@ onUnmounted(stopAutoplay)
   position: relative;
   min-height: 65vh;
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   background-repeat: no-repeat;
   display: flex;
   align-items: flex-end;
