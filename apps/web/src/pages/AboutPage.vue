@@ -217,46 +217,47 @@ onUnmounted(stopAutoplay)
 <style scoped lang="scss">
 .about-hero {
   position: relative;
-  min-height: 65vh;
+  min-height: 70vh;
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   color: var(--ma-cream);
 
+  /* Keep faces clear: light top, dark band only behind the title */
   &__overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(
       180deg,
-      rgba(17, 17, 17, 0.62) 0%,
-      rgba(17, 17, 17, 0.28) 42%,
-      rgba(17, 17, 17, 0.12) 70%,
-      rgba(17, 17, 17, 0.35) 100%
+      rgba(17, 17, 17, 0.22) 0%,
+      rgba(17, 17, 17, 0.08) 45%,
+      rgba(17, 17, 17, 0.55) 72%,
+      rgba(17, 17, 17, 0.9) 100%
     );
   }
 
   &__content {
     position: relative;
     z-index: 1;
-    padding-top: clamp(5.5rem, 12vh, 7.5rem);
-    padding-bottom: 2rem;
+    padding-top: 2rem;
+    padding-bottom: clamp(2.25rem, 5vh, 3.5rem);
     max-width: 48rem;
 
+    .ma-eyebrow {
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+    }
+
     .ma-heading {
-      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
     }
   }
 }
 
 @media (max-width: 800px) {
   .about-hero {
-    min-height: 52vh;
-
-    &__content {
-      padding-top: 4.5rem;
-    }
+    min-height: 58vh;
   }
 }
 
