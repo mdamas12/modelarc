@@ -222,25 +222,41 @@ onUnmounted(stopAutoplay)
   background-position: center top;
   background-repeat: no-repeat;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   color: var(--ma-cream);
 
   &__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(transparent 30%, rgba(17, 17, 17, 0.85));
+    background: linear-gradient(
+      180deg,
+      rgba(17, 17, 17, 0.62) 0%,
+      rgba(17, 17, 17, 0.28) 42%,
+      rgba(17, 17, 17, 0.12) 70%,
+      rgba(17, 17, 17, 0.35) 100%
+    );
   }
 
   &__content {
     position: relative;
     z-index: 1;
-    padding-bottom: 4rem;
+    padding-top: clamp(5.5rem, 12vh, 7.5rem);
+    padding-bottom: 2rem;
+    max-width: 48rem;
+
+    .ma-heading {
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+    }
   }
 }
 
 @media (max-width: 800px) {
   .about-hero {
     min-height: 52vh;
+
+    &__content {
+      padding-top: 4.5rem;
+    }
   }
 }
 
