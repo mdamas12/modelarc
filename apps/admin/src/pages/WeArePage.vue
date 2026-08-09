@@ -39,29 +39,27 @@
               />
             </div>
           </div>
-          <div class="col-12 col-lg-4">
-            <div class="editor-field">
-              <label class="editor-field__label">Visión</label>
-              <q-editor
-                v-model="form.vision"
-                class="html-editor"
-                min-height="180px"
-                :toolbar="htmlToolbar"
-              />
-            </div>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="form.vision"
+              outlined
+              type="textarea"
+              label="Visión"
+              autogrow
+              :input-style="{ minHeight: '100px' }"
+            />
           </div>
-          <div class="col-12 col-lg-4">
-            <div class="editor-field">
-              <label class="editor-field__label">Misión</label>
-              <q-editor
-                v-model="form.mission"
-                class="html-editor"
-                min-height="180px"
-                :toolbar="htmlToolbar"
-              />
-            </div>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="form.mission"
+              outlined
+              type="textarea"
+              label="Misión"
+              autogrow
+              :input-style="{ minHeight: '100px' }"
+            />
           </div>
-          <div class="col-12 col-lg-4">
+          <div class="col-12">
             <div class="editor-field">
               <label class="editor-field__label">Valores</label>
               <q-editor
@@ -225,14 +223,30 @@ function normalizeHtml(value: string): string | null {
   return text ? value : null
 }
 
+function toPlainText(value: string | null | undefined): string {
+  if (!value) return ''
+  return value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function normalizePlain(value: string): string | null {
+  const text = value.trim()
+  return text || null
+}
+
 async function load() {
   loading.value = true
   try {
     const payload = await adminApi.weAre()
     form.title = payload.we_are.title || ''
     form.description = payload.we_are.description || ''
-    form.vision = payload.we_are.vision || ''
-    form.mission = payload.we_are.mission || ''
+    form.vision = toPlainText(payload.we_are.vision)
+    form.mission = toPlainText(payload.we_are.mission)
     form.values = payload.we_are.values || ''
     teams.value = [...(payload.teams || [])].sort((a, b) => a.order - b.order)
   } catch {
@@ -252,8 +266,8 @@ async function saveInfo() {
     await adminApi.updateWeAre({
       title: form.title.trim(),
       description: normalizeHtml(form.description),
-      vision: normalizeHtml(form.vision),
-      mission: normalizeHtml(form.mission),
+      vision: normalizePlain(form.vision),
+      mission: normalizePlain(form.mission),
       values: normalizeHtml(form.values),
     })
     $q.notify({ type: 'positive', message: 'Información guardada' })
