@@ -29,40 +29,48 @@
             <q-input v-model="form.title" outlined label="Título *" />
           </div>
           <div class="col-12">
-            <q-input
-              v-model="form.description"
-              outlined
-              type="textarea"
-              label="Descripción"
-              autogrow
-            />
+            <div class="editor-field">
+              <label class="editor-field__label">Descripción</label>
+              <q-editor
+                v-model="form.description"
+                class="html-editor"
+                min-height="160px"
+                :toolbar="htmlToolbar"
+              />
+            </div>
           </div>
-          <div class="col-12 col-md-4">
-            <q-input
-              v-model="form.vision"
-              outlined
-              type="textarea"
-              label="Visión"
-              autogrow
-            />
+          <div class="col-12 col-lg-4">
+            <div class="editor-field">
+              <label class="editor-field__label">Visión</label>
+              <q-editor
+                v-model="form.vision"
+                class="html-editor"
+                min-height="180px"
+                :toolbar="htmlToolbar"
+              />
+            </div>
           </div>
-          <div class="col-12 col-md-4">
-            <q-input
-              v-model="form.mission"
-              outlined
-              type="textarea"
-              label="Misión"
-              autogrow
-            />
+          <div class="col-12 col-lg-4">
+            <div class="editor-field">
+              <label class="editor-field__label">Misión</label>
+              <q-editor
+                v-model="form.mission"
+                class="html-editor"
+                min-height="180px"
+                :toolbar="htmlToolbar"
+              />
+            </div>
           </div>
-          <div class="col-12 col-md-4">
-            <q-input
-              v-model="form.values"
-              outlined
-              type="textarea"
-              label="Valores"
-              autogrow
-            />
+          <div class="col-12 col-lg-4">
+            <div class="editor-field">
+              <label class="editor-field__label">Valores</label>
+              <q-editor
+                v-model="form.values"
+                class="html-editor"
+                min-height="180px"
+                :toolbar="htmlToolbar"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -257,6 +265,24 @@ const teamForm = reactive({
   published: true,
 })
 
+const htmlToolbar = [
+  ['left', 'center', 'right', 'justify'],
+  ['bold', 'italic', 'underline', 'strike'],
+  ['unordered', 'ordered'],
+  ['outdent', 'indent'],
+  ['undo', 'redo'],
+  ['removeFormat'],
+]
+
+function normalizeHtml(value: string): string | null {
+  const text = value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return text ? value : null
+}
+
 async function load() {
   loading.value = true
   try {
@@ -283,10 +309,10 @@ async function saveInfo() {
   try {
     await adminApi.updateWeAre({
       title: form.title.trim(),
-      description: form.description || null,
-      vision: form.vision || null,
-      mission: form.mission || null,
-      values: form.values || null,
+      description: normalizeHtml(form.description),
+      vision: normalizeHtml(form.vision),
+      mission: normalizeHtml(form.mission),
+      values: normalizeHtml(form.values),
     })
     $q.notify({ type: 'positive', message: 'Información guardada' })
   } catch {
@@ -419,6 +445,37 @@ onMounted(load)
   margin: 0;
   font-size: 0.8rem;
   color: #777;
+}
+
+.editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editor-field__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #666;
+}
+
+.html-editor {
+  border: 1px solid var(--ma-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.html-editor :deep(.q-editor__toolbar) {
+  background: #f7f4f0;
+  border-bottom: 1px solid var(--ma-border);
+}
+
+.html-editor :deep(.q-editor__content) {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #222;
 }
 
 .team-header {
