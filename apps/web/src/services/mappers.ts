@@ -248,6 +248,10 @@ export function mapTestimonial(raw: Record<string, unknown>): Testimonial {
     role: projectLabel || project?.title || 'Cliente Modelarc',
     quote: String(raw.quote ?? ''),
   };
+  const rating = Number(raw.rating);
+  if (Number.isFinite(rating) && rating > 0) {
+    testimonial.rating = Math.min(5, Math.max(1, Math.round(rating)));
+  }
   const avatar = mediaUrl(raw.client_photo);
   if (avatar) testimonial.avatar = avatar;
   return testimonial;

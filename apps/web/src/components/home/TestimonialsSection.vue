@@ -108,6 +108,21 @@ watch(pageCount, clampPage);
           <footer>
             <strong>{{ item.name }}</strong>
             <span>{{ item.role }}</span>
+            <div
+              v-if="item.rating"
+              class="testimonials__stars"
+              :aria-label="`${item.rating} de 5 estrellas`"
+            >
+              <span
+                v-for="star in 5"
+                :key="star"
+                class="testimonials__star"
+                :class="{ 'testimonials__star--on': star <= (item.rating || 0) }"
+                aria-hidden="true"
+              >
+                ★
+              </span>
+            </div>
           </footer>
         </blockquote>
       </div>
@@ -202,6 +217,22 @@ watch(pageCount, clampPage);
     span {
       font-size: 0.8rem;
       color: rgba(247, 244, 240, 0.55);
+    }
+  }
+
+  &__stars {
+    display: flex;
+    gap: 0.12rem;
+    margin-top: 0.35rem;
+  }
+
+  &__star {
+    font-size: 0.95rem;
+    line-height: 1;
+    color: rgba(247, 244, 240, 0.22);
+
+    &--on {
+      color: var(--ma-gold);
     }
   }
 }
