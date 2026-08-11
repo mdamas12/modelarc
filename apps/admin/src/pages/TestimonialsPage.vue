@@ -119,7 +119,11 @@
           <div class="testimonial-card__field testimonial-card__field--full">
             <span class="testimonial-card__label">Proyecto</span>
             <div class="testimonial-card__value">
-              {{ item.project?.title || (item.project_id ? `#${item.project_id}` : '—') }}
+              {{
+                item.project?.title ||
+                item.project_label ||
+                (item.project_id ? `#${item.project_id}` : '—')
+              }}
             </div>
           </div>
 
@@ -185,6 +189,12 @@
               </q-item>
             </template>
           </q-select>
+          <q-input
+            v-model="form.project_label"
+            outlined
+            label="Proyecto / referencia (opcional)"
+            hint="Texto libre a mostrar si no se vincula un proyecto, ej. 'Reforma integral · Providencia'"
+          />
           <q-input v-model.number="form.sort_order" outlined type="number" label="Orden" />
           <q-select
             v-model="form.status"
@@ -280,6 +290,7 @@ const form = reactive({
   quote: '',
   rating: 5,
   project_id: null as number | null,
+  project_label: '',
   sort_order: 0,
   status: 'active',
 })
@@ -312,6 +323,7 @@ function resetForm() {
     quote: '',
     rating: 5,
     project_id: null,
+    project_label: '',
     sort_order: 0,
     status: 'active',
   })
@@ -372,6 +384,7 @@ async function openEdit(row: Testimonial) {
     quote: row.quote,
     rating: row.rating ?? 5,
     project_id: row.project?.id ?? row.project_id ?? null,
+    project_label: row.project_label ?? '',
     sort_order: row.sort_order ?? 0,
     status: row.status || 'active',
   })

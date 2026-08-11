@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
         redirect: (to) => `/proyectos/${to.params.id}`,
       },
       {
+        path: 'categorias',
+        name: 'categories',
+        component: () => import('@/pages/CategoriesPage.vue'),
+        meta: { title: 'Categorías' },
+      },
+      {
         path: 'recorridos',
         name: 'tours',
         component: () => import('@/pages/ToursPage.vue'),
@@ -71,6 +77,12 @@ const routes: RouteRecordRaw[] = [
         name: 'media',
         component: () => import('@/pages/MediaPage.vue'),
         meta: { title: 'Galería de medios' },
+      },
+      {
+        path: 'hero',
+        name: 'hero',
+        component: () => import('@/pages/HeroPage.vue'),
+        meta: { title: 'Hero' },
       },
       {
         path: 'servicios',

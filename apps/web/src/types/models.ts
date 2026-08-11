@@ -62,6 +62,9 @@ export interface ContactPayload {
   name: string;
   email: string;
   phone?: string;
+  country?: string;
+  state?: string;
+  city?: string;
   service?: string;
   message: string;
 }

@@ -11,6 +11,7 @@ class Testimonial extends Model
         'client_name',
         'client_photo_media_id',
         'project_id',
+        'project_label',
         'quote',
         'rating',
         'sort_order',

@@ -396,9 +396,10 @@ onUnmounted(stopAutoplay)
   &__img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center 30%;
+    object-fit: contain;
+    object-position: center center;
     display: block;
+    image-rendering: auto;
   }
 
   &__nav {
@@ -486,7 +487,7 @@ onUnmounted(stopAutoplay)
     }
 
     &__img {
-      object-position: center 22%;
+      object-position: center center;
     }
 
     &__nav {

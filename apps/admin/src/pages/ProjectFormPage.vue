@@ -196,13 +196,25 @@
             </div>
             <div class="col-12 col-md-6">
               <q-select
-                v-model="form.category"
+                v-model="form.category_id"
                 outlined
                 emit-value
                 map-options
                 label="Categoría *"
                 :options="categoryOptions"
                 :rules="[(v) => !!v || 'Requerido']"
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-select
+                v-model="form.subcategory_id"
+                outlined
+                emit-value
+                map-options
+                clearable
+                label="Subcategoría"
+                :options="subcategorySelectOptions"
+                :disable="!subcategorySelectOptions.length"
               />
             </div>
             <div class="col-12 col-md-6">
@@ -283,7 +295,8 @@
       v-if="isEdit"
       class="q-mt-md"
       :project-id="route.params.id as string"
-      :category="form.category"
+      :category="selectedCategory?.slug || ''"
+      :subcategory-options="mediaSubcategoryOptions"
     />
   </q-page>
 </template>
@@ -294,8 +307,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import ProjectGalleryChangesSection from '@/components/projects/ProjectGalleryChangesSection.vue'
 import { adminApi } from '@/services/adminApi'
-import { PROJECT_CATEGORIES, subcategoriesFor } from '@/constants/mediaTaxonomy'
-import type { ProjectMedia } from '@/types'
+import type { Category, ProjectMedia } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -313,13 +325,15 @@ const showSeoFields = false
 const fileInput = ref<HTMLInputElement | null>(null)
 const mediaItems = ref<ProjectMedia[]>([])
 const placeholder = 'https://placehold.co/400x400/1a1a1a/c4a47c?text=Media'
+const categories = ref<Category[]>([])
 
 const form = reactive({
   title: '',
   slug: '',
   summary: '',
   description: '',
-  category: 'residencial',
+  category_id: null as number | null,
+  subcategory_id: null as number | null,
   location: '',
   year: null as number | null,
   status: null as string | null,
@@ -333,9 +347,38 @@ const form = reactive({
   seo_description: '',
 })
 
-const categoryOptions = [...PROJECT_CATEGORIES]
+const categoryOptions = computed(() =>
+  categories.value.map((c) => ({ label: c.name, value: c.id })),
+)
 
-const projectSubcategoryOptions = computed(() => subcategoriesFor(form.category))
+const selectedCategory = computed(() =>
+  categories.value.find((c) => c.id === form.category_id) || null,
+)
+
+// Options for the project-level "Subcategoría" select (value = subcategory id).
+const subcategorySelectOptions = computed(() =>
+  (selectedCategory.value?.subcategories || [])
+    .filter((s) => s.published)
+    .map((s) => ({ label: s.name, value: s.id })),
+)
+
+// Options for per-photo / before-after subcategory pickers (value = subcategory slug,
+// since ProjectMedia/GalleryChange store the slug as a plain string).
+const mediaSubcategoryOptions = computed(() =>
+  (selectedCategory.value?.subcategories || [])
+    .filter((s) => s.published)
+    .map((s) => ({ label: s.name, value: s.slug })),
+)
+
+const projectSubcategoryOptions = computed(() => mediaSubcategoryOptions.value)
+
+async function loadCategories() {
+  try {
+    categories.value = await adminApi.categories()
+  } catch {
+    categories.value = []
+  }
+}
 
 const workStatusOptions = [
   { label: 'En ejecución', value: 'en_ejecucion' },
@@ -376,7 +419,8 @@ async function loadProject() {
       slug: project.slug || '',
       summary: project.summary || '',
       description: project.description || '',
-      category: project.category || 'residencial',
+      category_id: project.category_id ?? project.category_ref?.id ?? null,
+      subcategory_id: project.subcategory_id ?? project.subcategory_ref?.id ?? null,
       location: project.location || '',
       year: project.year ?? null,
       status: project.status ?? null,
@@ -430,7 +474,7 @@ async function addFiles(files: File[]) {
   try {
     for (const file of files) {
       const media = await adminApi.uploadMedia(file, 'image', {
-        category: form.category,
+        category: selectedCategory.value?.slug || null,
         is_published: true,
       })
       mediaItems.value.push({
@@ -535,12 +579,17 @@ watch(
 )
 
 watch(
-  () => form.category,
-  (category) => {
-    const allowed = new Set(subcategoriesFor(category).map((o) => o.value))
+  () => form.category_id,
+  () => {
+    const allowedIds = new Set(subcategorySelectOptions.value.map((o) => o.value))
+    if (form.subcategory_id && !allowedIds.has(form.subcategory_id)) {
+      form.subcategory_id = null
+    }
+
+    const allowedSlugs = new Set(mediaSubcategoryOptions.value.map((o) => o.value))
     let changed = false
     mediaItems.value = mediaItems.value.map((m) => {
-      if (m.subcategory && !allowed.has(m.subcategory)) {
+      if (m.subcategory && !allowedSlugs.has(m.subcategory)) {
         changed = true
         return { ...m, subcategory: null }
       }
@@ -550,7 +599,13 @@ watch(
   },
 )
 
-onMounted(loadProject)
+onMounted(async () => {
+  await loadCategories()
+  if (!isEdit.value && !form.category_id && categories.value.length) {
+    form.category_id = categories.value[0]!.id
+  }
+  await loadProject()
+})
 </script>
 
 <style scoped lang="scss">

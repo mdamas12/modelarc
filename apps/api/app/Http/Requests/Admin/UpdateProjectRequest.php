@@ -23,7 +23,17 @@ class UpdateProjectRequest extends FormRequest
             'summary' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'project_type_id' => ['nullable', 'exists:project_types,id'],
-            'category' => ['sometimes', Rule::in(['residencial', 'comercial', 'corporativo'])],
+            // Legacy string kept optional/derived: prefer category_id, resolved into `category` on save.
+            'category' => ['nullable', 'string', 'max:100'],
+            'category_id' => ['nullable', 'exists:categories,id'],
+            'subcategory_id' => [
+                'nullable',
+                Rule::exists('subcategories', 'id')->where(function ($query) {
+                    if ($this->filled('category_id')) {
+                        $query->where('category_id', $this->input('category_id'));
+                    }
+                }),
+            ],
             'location' => ['nullable', 'string', 'max:255'],
             'year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
             'status' => ['nullable', Rule::in(['en_ejecucion', 'finalizado'])],

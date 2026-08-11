@@ -50,6 +50,28 @@ export interface GalleryChange {
   updated_at?: string
 }
 
+export interface Subcategory {
+  id: number
+  category_id: number
+  name: string
+  slug: string
+  order: number
+  published: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Category {
+  id: number
+  name: string
+  slug: string
+  order: number
+  published: boolean
+  subcategories?: Subcategory[]
+  created_at?: string
+  updated_at?: string
+}
+
 export interface Project {
   id: number
   title: string
@@ -57,6 +79,10 @@ export interface Project {
   summary?: string | null
   description?: string | null
   category: string
+  category_id?: number | null
+  subcategory_id?: number | null
+  category_ref?: Category | null
+  subcategory_ref?: Subcategory | null
   location?: string | null
   year?: number | null
   status?: string | null
@@ -171,6 +197,7 @@ export interface Testimonial {
   client_photo?: MediaItem | null
   project?: Project | null
   project_id?: number | null
+  project_label?: string | null
   created_at?: string
 }
 
@@ -223,6 +250,31 @@ export interface WeAreTeam {
 export interface WeArePayload {
   we_are: WeAre
   teams: WeAreTeam[]
+}
+
+export interface Hero {
+  id: number
+  text_1?: string | null
+  text_2?: string | null
+  text_3?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface HeroGallery {
+  id: number
+  hero_id?: number
+  path: string
+  url?: string | null
+  order: number
+  published: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface HeroPayload {
+  hero: Hero
+  galleries: HeroGallery[]
 }
 
 export interface DashboardData {

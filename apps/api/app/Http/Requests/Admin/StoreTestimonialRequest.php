@@ -20,6 +20,7 @@ class StoreTestimonialRequest extends FormRequest
             'client_name' => ['required', 'string', 'max:255'],
             'client_photo_media_id' => ['nullable', 'exists:media,id'],
             'project_id' => ['nullable', 'exists:projects,id'],
+            'project_label' => ['nullable', 'string', 'max:255'],
             'quote' => ['required', 'string'],
             'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sort_order' => ['nullable', 'integer', 'min:0'],

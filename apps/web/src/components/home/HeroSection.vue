@@ -1,20 +1,80 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { heroImage } from '@/data/mockData';
+import { useHomeStore } from '@/stores/homeStore';
+
+const SLIDE_INTERVAL_MS = 5000;
+
+const home = useHomeStore();
+
+onMounted(() => {
+  if (!home.loaded) void home.loadHome();
+});
+
+const FALLBACK_TEXT_1 = 'Arquitectura · Construcción · Remodelación';
+const FALLBACK_TEXT_2 = 'Diseñamos espacios\nque transforman tu vida';
+const FALLBACK_TEXT_3 =
+  'Proyectos residenciales y comerciales con identidad, precisión técnica y una experiencia inmersiva en cada detalle.';
+
+const eyebrow = computed(() => home.hero.text1 || FALLBACK_TEXT_1);
+const titleLines = computed(() => (home.hero.text2 || FALLBACK_TEXT_2).split('\n').filter(Boolean));
+const lead = computed(() => home.hero.text3 || FALLBACK_TEXT_3);
+
+const slides = computed(() => {
+  const urls = home.heroGalleries.map((item) => item.url);
+  return urls.length ? urls : [heroImage];
+});
+
+const activeSlide = ref(0);
+let timer: ReturnType<typeof setInterval> | null = null;
+
+function stopSlideshow() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+function startSlideshow() {
+  stopSlideshow();
+  if (slides.value.length <= 1) return;
+  timer = setInterval(() => {
+    activeSlide.value = (activeSlide.value + 1) % slides.value.length;
+  }, SLIDE_INTERVAL_MS);
+}
+
+watch(
+  slides,
+  () => {
+    activeSlide.value = 0;
+    startSlideshow();
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  stopSlideshow();
+});
 </script>
 
 <template>
-  <section class="hero" :style="{ backgroundImage: `url(${heroImage})` }">
+  <section class="hero">
+    <div class="hero__slides">
+      <div
+        v-for="(slide, index) in slides"
+        :key="slide"
+        class="hero__slide"
+        :class="{ 'hero__slide--active': index === activeSlide }"
+        :style="{ backgroundImage: `url(${slide})` }"
+      />
+    </div>
     <div class="hero__overlay" />
     <div class="hero__content ma-container">
-      <p class="ma-eyebrow">Arquitectura · Construcción · Remodelación</p>
+      <p class="ma-eyebrow">{{ eyebrow }}</p>
       <h1 class="hero__title">
-        <span class="hero__title-line">Diseñamos espacios</span>
-        <span class="hero__title-line">que transforman tu vida</span>
+        <span v-for="line in titleLines" :key="line" class="hero__title-line">{{ line }}</span>
       </h1>
-      <p class="hero__lead">
-        Proyectos residenciales y comerciales con identidad, precisión técnica y una experiencia
-        inmersiva en cada detalle.
-      </p>
+      <p class="hero__lead">{{ lead }}</p>
       <div class="hero__actions">
         <router-link to="/proyectos" class="ma-btn ma-btn--gold">Ver proyectos</router-link>
         <router-link to="/recorridos-360" class="ma-btn ma-btn--outline">Explorar 360°</router-link>
@@ -31,11 +91,28 @@ import { heroImage } from '@/data/mockData';
   position: relative;
   min-height: calc(100vh - 4.5rem);
   min-height: calc(100dvh - 4.5rem);
-  background-size: cover;
-  background-position: center;
   display: flex;
   align-items: flex-end;
   color: var(--ma-cream);
+  overflow: hidden;
+
+  &__slides {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.6s ease-in-out;
+
+    &--active {
+      opacity: 1;
+    }
+  }
 
   &__overlay {
     position: absolute;

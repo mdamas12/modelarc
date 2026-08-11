@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use App\Models\Category;
 use App\Models\Project;
 use App\Models\ProjectMedia;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -16,7 +17,7 @@ class ProjectService
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->filteredQuery($filters)
-            ->with(['projectType', 'coverMedia'])
+            ->with(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef'])
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->paginate($perPage);
@@ -27,7 +28,7 @@ class ProjectService
         $filters['publication_status'] = 'published';
 
         return $this->filteredQuery($filters)
-            ->with(['projectType', 'coverMedia'])
+            ->with(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef'])
             ->orderBy('sort_order')
             ->orderByDesc('published_at')
             ->paginate($perPage);
@@ -39,6 +40,8 @@ class ProjectService
             ->with([
                 'projectType',
                 'coverMedia',
+                'categoryRef',
+                'subcategoryRef',
                 'projectMedia' => function ($q) use ($publishedOnly) {
                     if ($publishedOnly) {
                         $q->where('is_published', true);
@@ -75,6 +78,7 @@ class ProjectService
     {
         return DB::transaction(function () use ($data, $userId) {
             $mediaIds = Arr::pull($data, 'media', []);
+            $data = $this->syncCategoryFromRelation($data);
 
             $data['slug'] = $this->uniqueSlug($data['slug'] ?? $data['title']);
             $data['created_by'] = $userId;
@@ -94,7 +98,7 @@ class ProjectService
                 'subject_id' => $project->id,
             ]);
 
-            return $project->load(['projectType', 'coverMedia', 'projectMedia.media']);
+            return $project->load(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef', 'projectMedia.media']);
         });
     }
 
@@ -102,6 +106,7 @@ class ProjectService
     {
         return DB::transaction(function () use ($project, $data) {
             $mediaIds = Arr::pull($data, 'media', null);
+            $data = $this->syncCategoryFromRelation($data);
 
             if (isset($data['title']) && empty($data['slug'])) {
                 $data['slug'] = $this->uniqueSlug($data['title'], $project->id);
@@ -123,8 +128,35 @@ class ProjectService
                 'subject_id' => $project->id,
             ]);
 
-            return $project->fresh(['projectType', 'coverMedia', 'projectMedia.media']);
+            return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef', 'projectMedia.media']);
         });
+    }
+
+    /**
+     * When a `category_id` is provided, keep the legacy `category` string
+     * column in sync (as the category's slug) for backward compatibility
+     * with code that still filters/displays by that string.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function syncCategoryFromRelation(array $data): array
+    {
+        if (! array_key_exists('category_id', $data)) {
+            return $data;
+        }
+
+        if (empty($data['category_id'])) {
+            return $data;
+        }
+
+        $category = Category::query()->find($data['category_id']);
+
+        if ($category) {
+            $data['category'] = $category->slug;
+        }
+
+        return $data;
     }
 
     public function publish(Project $project): Project
@@ -134,7 +166,7 @@ class ProjectService
             'published_at' => $project->published_at ?? now(),
         ]);
 
-        return $project->fresh(['projectType', 'coverMedia']);
+        return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef']);
     }
 
     public function archive(Project $project): Project
@@ -143,7 +175,7 @@ class ProjectService
             'publication_status' => 'archived',
         ]);
 
-        return $project->fresh(['projectType', 'coverMedia']);
+        return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef']);
     }
 
     /**
@@ -168,18 +200,18 @@ class ProjectService
 
         $index = array_search($project->id, $ids, true);
         if ($index === false) {
-            return $project->fresh(['projectType', 'coverMedia']) ?? $project;
+            return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef']) ?? $project;
         }
 
         $target = $direction === 'up' ? $index - 1 : $index + 1;
         if ($target < 0 || $target >= count($ids)) {
-            return $project->fresh(['projectType', 'coverMedia']) ?? $project;
+            return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef']) ?? $project;
         }
 
         [$ids[$index], $ids[$target]] = [$ids[$target], $ids[$index]];
         $this->reorder($ids);
 
-        return $project->fresh(['projectType', 'coverMedia']) ?? $project;
+        return $project->fresh(['projectType', 'coverMedia', 'categoryRef', 'subcategoryRef']) ?? $project;
     }
 
     public function delete(Project $project): void

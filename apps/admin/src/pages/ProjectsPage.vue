@@ -74,7 +74,7 @@
           <div class="project-card__overlay">
             <h3 class="project-card__title">{{ project.title }}</h3>
             <p class="project-card__meta">
-              {{ labelCategory(project.category) }}
+              {{ labelCategory(project) }}
               <span v-if="project.location"> · {{ project.location }}</span>
             </p>
             <p class="project-card__meta">
@@ -192,7 +192,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { adminApi } from '@/services/adminApi'
-import type { Project } from '@/types'
+import type { Category, Project } from '@/types'
 
 const $q = useQuasar()
 const loading = ref(false)
@@ -207,6 +207,8 @@ const filters = reactive({
   publication_status: null as string | null,
   category: null as string | null,
 })
+
+const categories = ref<Category[]>([])
 
 const pagination = ref({
   page: 1,
@@ -224,18 +226,29 @@ const statusOptions = [
   { label: 'Archivado', value: 'archived' },
 ]
 
-const categoryOptions = [
-  { label: 'Residencial', value: 'residencial' },
-  { label: 'Comercial', value: 'comercial' },
-  { label: 'Corporativo', value: 'corporativo' },
-]
+const categoryOptions = computed(() =>
+  categories.value.map((c) => ({ label: c.name, value: c.slug })),
+)
 
 function coverOf(project: Project) {
   return project.cover_media?.url || placeholder
 }
 
-function labelCategory(value?: string) {
-  return categoryOptions.find((o) => o.value === value)?.label || value || '—'
+function labelCategory(project: Project) {
+  return (
+    project.category_ref?.name ||
+    categoryOptions.value.find((o) => o.value === project.category)?.label ||
+    project.category ||
+    '—'
+  )
+}
+
+async function loadCategories() {
+  try {
+    categories.value = await adminApi.categories()
+  } catch {
+    categories.value = []
+  }
 }
 
 function labelStatus(value?: string) {
@@ -348,7 +361,10 @@ async function remove(id: number) {
   })
 }
 
-onMounted(load)
+onMounted(() => {
+  void loadCategories()
+  void load()
+})
 </script>
 
 <style scoped lang="scss">

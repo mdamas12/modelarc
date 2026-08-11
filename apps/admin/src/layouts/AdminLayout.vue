@@ -121,8 +121,10 @@ const menuSections = [
     label: 'Gestión',
     items: [
       { label: 'Proyectos', icon: 'apartment', to: '/proyectos' },
+      { label: 'Categorías', icon: 'category', to: '/categorias' },
       { label: 'Recorridos 360°', icon: 'panorama_photosphere', to: '/recorridos' },
       { label: 'Galería de medios', icon: 'photo_library', to: '/medios' },
+      { label: 'Hero', icon: 'view_carousel', to: '/hero' },
       { label: 'Servicios', icon: 'handyman', to: '/servicios' },
       { label: 'Quiénes somos', icon: 'groups', to: '/quienes-somos' },
       { label: 'Testimonios', icon: 'format_quote', to: '/testimonios' },

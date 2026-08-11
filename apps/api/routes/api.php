@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Admin\AccountActivationController;
 use App\Http\Controllers\Api\Admin\AccountPasswordResetController;
 use App\Http\Controllers\Api\Admin\AuthController;
+use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\GalleryChangeController;
 use App\Http\Controllers\Api\Admin\HotspotController;
@@ -12,12 +13,16 @@ use App\Http\Controllers\Api\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\Api\Admin\SceneController;
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\SettingController;
+use App\Http\Controllers\Api\Admin\SubcategoryController as AdminSubcategoryController;
 use App\Http\Controllers\Api\Admin\TestimonialController;
 use App\Http\Controllers\Api\Admin\TestimonialInvitationController as AdminTestimonialInvitationController;
 use App\Http\Controllers\Api\Admin\TourController as AdminTourController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\Admin\HeroController as AdminHeroController;
+use App\Http\Controllers\Api\Admin\HeroGalleryController;
 use App\Http\Controllers\Api\Admin\WeAreController as AdminWeAreController;
 use App\Http\Controllers\Api\Admin\WeAreTeamController;
+use App\Http\Controllers\Api\Website\CategoryController as PublicCategoryController;
 use App\Http\Controllers\Api\Website\ContactController;
 use App\Http\Controllers\Api\Website\GalleryController;
 use App\Http\Controllers\Api\Website\HomeController;
@@ -36,6 +41,7 @@ Route::prefix('public')->group(function () {
     Route::get('projects', [ProjectController::class, 'index']);
     Route::get('projects/{slug}', [ProjectController::class, 'show']);
     Route::get('projects/{slug}/tour', [ProjectController::class, 'tour']);
+    Route::get('categories', [PublicCategoryController::class, 'index']);
     Route::get('services', [ServiceController::class, 'index']);
     Route::get('services/{slug}', [ServiceController::class, 'show']);
     Route::get('we-are', PublicWeAreController::class);
@@ -66,6 +72,11 @@ Route::prefix('admin')->group(function () {
         Route::post('users/{user}/unblock', [UserController::class, 'unblock']);
         Route::post('users/{user}/resend-activation', [UserController::class, 'resendActivation']);
         Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
+
+        Route::apiResource('categories', AdminCategoryController::class);
+        Route::post('categories/{category}/subcategories', [AdminSubcategoryController::class, 'store']);
+        Route::put('subcategories/{subcategory}', [AdminSubcategoryController::class, 'update']);
+        Route::delete('subcategories/{subcategory}', [AdminSubcategoryController::class, 'destroy']);
 
         Route::apiResource('projects', AdminProjectController::class);
         Route::post('projects/reorder', [AdminProjectController::class, 'reorder']);
@@ -98,6 +109,13 @@ Route::prefix('admin')->group(function () {
 
         Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
         Route::apiResource('services', AdminServiceController::class);
+
+        Route::get('hero', [AdminHeroController::class, 'show']);
+        Route::put('hero', [AdminHeroController::class, 'update']);
+        Route::post('hero/gallery', [HeroGalleryController::class, 'store']);
+        Route::post('hero/gallery/reorder', [HeroGalleryController::class, 'reorder']);
+        Route::post('hero/gallery/{heroGallery}', [HeroGalleryController::class, 'update']);
+        Route::delete('hero/gallery/{heroGallery}', [HeroGalleryController::class, 'destroy']);
 
         Route::get('we-are', [AdminWeAreController::class, 'show']);
         Route::put('we-are', [AdminWeAreController::class, 'update']);

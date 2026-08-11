@@ -288,13 +288,18 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import AdminBeforeAfterSlider from '@/components/projects/AdminBeforeAfterSlider.vue'
 import { adminApi } from '@/services/adminApi'
-import { labelSubcategory, subcategoriesFor } from '@/constants/mediaTaxonomy'
 import type { GalleryChange } from '@/types'
 
-const props = defineProps<{
-  projectId: number | string
-  category: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    projectId: number | string
+    category: string
+    subcategoryOptions?: { label: string; value: string }[]
+  }>(),
+  {
+    subcategoryOptions: () => [],
+  },
+)
 
 const $q = useQuasar()
 const placeholder = 'https://placehold.co/800x500/1a1a1a/c4a47c?text=Imagen'
@@ -334,7 +339,12 @@ const form = reactive({
   is_featured: false,
 })
 
-const subcategoryOptions = computed(() => subcategoriesFor(props.category))
+const subcategoryOptions = computed(() => props.subcategoryOptions)
+
+function labelSubcategory(_category: string, subcategory?: string | null) {
+  if (!subcategory) return '—'
+  return subcategoryOptions.value.find((o) => o.value === subcategory)?.label || subcategory
+}
 
 const compareOptions = computed(() => {
   const opts: { label: string; value: 'design' | 'after' }[] = []

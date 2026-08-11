@@ -12,6 +12,9 @@ const form = reactive<ContactPayload>({
   name: '',
   email: '',
   phone: '',
+  country: '',
+  state: '',
+  city: '',
   service: 'Diseño arquitectónico',
   message: '',
 });
@@ -42,14 +45,14 @@ const socialLinks = [
   },
   {
     label: 'Gmail',
-    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=ofic.modelarc@gmail.com',
+    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=modelarca@gmail.com',
     icon: 'gmail',
   },
 ];
 
 async function onSubmit() {
-  if (!form.name || !form.email || !form.message) {
-    $q.notify({ type: 'warning', message: 'Completa nombre, email y mensaje.' });
+  if (!form.name || !form.email || !form.message || !form.country || !form.state || !form.city) {
+    $q.notify({ type: 'warning', message: 'Completa nombre, email, ubicación y mensaje.' });
     return;
   }
   sending.value = true;
@@ -59,6 +62,9 @@ async function onSubmit() {
     form.name = '';
     form.email = '';
     form.phone = '';
+    form.country = '';
+    form.state = '';
+    form.city = '';
     form.message = '';
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo enviar el mensaje. Intenta de nuevo.' });
@@ -102,6 +108,18 @@ async function onSubmit() {
               <option v-for="s in services" :key="s" :value="s">{{ s }}</option>
             </select>
           </label>
+          <label>
+            País
+            <input v-model="form.country" type="text" required autocomplete="country-name" />
+          </label>
+          <label>
+            Estado
+            <input v-model="form.state" type="text" required />
+          </label>
+          <label>
+            Ciudad
+            <input v-model="form.city" type="text" required />
+          </label>
           <label class="contact-form__full">
             Mensaje
             <textarea v-model="form.message" rows="5" required />
@@ -119,7 +137,7 @@ async function onSubmit() {
           </p>
           <p class="contact-aside__row">
             <q-icon name="email" size="20px" aria-hidden="true" />
-            <a href="mailto:ofic.modelarc@gmail.com">ofic.modelarc@gmail.com</a>
+            <a href="mailto:modelarca@gmail.com">modelarca@gmail.com</a>
           </p>
           <p class="contact-aside__row">
             <q-icon name="phone" size="20px" aria-hidden="true" />

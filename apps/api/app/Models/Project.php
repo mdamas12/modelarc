@@ -19,6 +19,8 @@ class Project extends Model
         'summary',
         'description',
         'project_type_id',
+        'category_id',
+        'subcategory_id',
         'category',
         'location',
         'year',
@@ -53,6 +55,20 @@ class Project extends Model
     public function projectType(): BelongsTo
     {
         return $this->belongsTo(ProjectType::class);
+    }
+
+    /**
+     * Named "categoryRef" (not "category") to avoid clashing with the legacy
+     * `category` string attribute kept for backward compatibility.
+     */
+    public function categoryRef(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function subcategoryRef(): BelongsTo
+    {
+        return $this->belongsTo(Subcategory::class, 'subcategory_id');
     }
 
     public function coverMedia(): BelongsTo

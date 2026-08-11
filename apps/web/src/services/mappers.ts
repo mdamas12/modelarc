@@ -107,12 +107,13 @@ export function mapProject(raw: Record<string, unknown>): Project {
 
   const virtualTour = raw.virtual_tour as Record<string, unknown> | null | undefined;
   const projectType = raw.project_type as { name?: string } | null | undefined;
+  const categoryRef = raw.category_ref as { name?: string } | null | undefined;
 
   const project: Project = {
     id: String(raw.id),
     slug: String(raw.slug ?? ''),
     title: String(raw.title ?? ''),
-    category: titleCase(projectType?.name ?? String(raw.category ?? '')),
+    category: titleCase(categoryRef?.name ?? projectType?.name ?? String(raw.category ?? '')),
     location: String(raw.location ?? ''),
     year: Number(raw.year ?? new Date().getFullYear()),
     coverImage: cover,
@@ -221,10 +222,12 @@ export function mapService(raw: Record<string, unknown>, index = 0): ServiceItem
 
 export function mapTestimonial(raw: Record<string, unknown>): Testimonial {
   const project = raw.project as { title?: string } | null | undefined;
+  const projectLabel =
+    (typeof raw.project_label === 'string' && raw.project_label.trim()) || undefined;
   const testimonial: Testimonial = {
     id: String(raw.id),
     name: String(raw.client_name ?? ''),
-    role: project?.title ? `Cliente · ${project.title}` : 'Cliente Modelarc',
+    role: projectLabel || project?.title || 'Cliente Modelarc',
     quote: String(raw.quote ?? ''),
   };
   const avatar = mediaUrl(raw.client_photo);

@@ -44,6 +44,30 @@
             :to="`/recorridos/${tour.id}/editor`"
           />
           <q-btn
+            v-if="tour.status !== 'published'"
+            outline
+            no-caps
+            dense
+            color="positive"
+            class="project-card__btn"
+            icon="publish"
+            label="Publicar"
+            :loading="publishingId === tour.id"
+            @click="publish(tour)"
+          />
+          <q-btn
+            v-else
+            outline
+            no-caps
+            dense
+            color="warning"
+            class="project-card__btn"
+            icon="unpublished"
+            label="Borrador"
+            :loading="publishingId === tour.id"
+            @click="unpublish(tour)"
+          />
+          <q-btn
             outline
             no-caps
             dense
@@ -124,6 +148,7 @@ const router = useRouter()
 const loading = ref(false)
 const creating = ref(false)
 const loadingProjects = ref(false)
+const publishingId = ref<number | null>(null)
 const showCreate = ref(false)
 const rows = ref<VirtualTour[]>([])
 const projectOptions = ref<ProjectOption[]>([])
@@ -243,6 +268,32 @@ async function create() {
   }
 }
 
+async function publish(tour: VirtualTour) {
+  publishingId.value = tour.id
+  try {
+    await adminApi.publishTour(tour.id)
+    $q.notify({ type: 'positive', message: 'Recorrido publicado' })
+    await load()
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo publicar el recorrido' })
+  } finally {
+    publishingId.value = null
+  }
+}
+
+async function unpublish(tour: VirtualTour) {
+  publishingId.value = tour.id
+  try {
+    await adminApi.updateTour(tour.id, { status: 'draft' })
+    $q.notify({ type: 'positive', message: 'Recorrido pasado a borrador' })
+    await load()
+  } catch {
+    $q.notify({ type: 'negative', message: 'No se pudo cambiar el estado' })
+  } finally {
+    publishingId.value = null
+  }
+}
+
 async function remove(id: number) {
   $q.dialog({
     title: 'Eliminar tour',
@@ -316,13 +367,14 @@ onMounted(load)
 .project-card__actions {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 0.85rem 0.9rem;
 }
 
 .project-card__btn {
-  flex: 1;
+  flex: 1 1 calc(50% - 0.25rem);
   min-height: 32px;
   font-size: 0.75rem;
   font-weight: 600;

@@ -20,7 +20,7 @@ class UpdateMediaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'category' => ['nullable', Rule::in(MediaTaxonomy::CATEGORIES)],
+            'category' => ['nullable', 'string', 'max:100'],
             'subcategory' => ['nullable', 'string', 'max:100'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             'is_published' => ['sometimes', 'boolean'],
@@ -37,6 +37,10 @@ class UpdateMediaRequest extends FormRequest
 
             if ($category === null && $this->route('medium')) {
                 $category = $this->route('medium')->category;
+            }
+
+            if (! MediaTaxonomy::isValidCategory($this->input('category'))) {
+                $validator->errors()->add('category', 'La categoría no es válida.');
             }
 
             if (! MediaTaxonomy::isValidSubcategory($category, $subcategory)) {

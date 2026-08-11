@@ -1,13 +1,18 @@
 import { api } from '@/boot/axios'
 import type {
+  Category,
   DashboardData,
   GalleryChange,
   Lead,
   MediaItem,
   Paginated,
   Project,
+  Hero,
+  HeroGallery,
+  HeroPayload,
   Service,
   SiteSetting,
+  Subcategory,
   Testimonial,
   TourHotspot,
   TourScene,
@@ -212,6 +217,39 @@ export const adminApi = {
     await api.delete(`/admin/leads/${id}`)
   },
 
+  async categories() {
+    const { data } = await api.get('/admin/categories')
+    return unwrapData<Category[]>(data)
+  },
+
+  async createCategory(payload: Record<string, unknown>) {
+    const { data } = await api.post('/admin/categories', payload)
+    return unwrapData<Category>(data)
+  },
+
+  async updateCategory(id: number | string, payload: Record<string, unknown>) {
+    const { data } = await api.put(`/admin/categories/${id}`, payload)
+    return unwrapData<Category>(data)
+  },
+
+  async deleteCategory(id: number | string) {
+    await api.delete(`/admin/categories/${id}`)
+  },
+
+  async createSubcategory(categoryId: number | string, payload: Record<string, unknown>) {
+    const { data } = await api.post(`/admin/categories/${categoryId}/subcategories`, payload)
+    return unwrapData<Subcategory>(data)
+  },
+
+  async updateSubcategory(id: number | string, payload: Record<string, unknown>) {
+    const { data } = await api.put(`/admin/subcategories/${id}`, payload)
+    return unwrapData<Subcategory>(data)
+  },
+
+  async deleteSubcategory(id: number | string) {
+    await api.delete(`/admin/subcategories/${id}`)
+  },
+
   async services() {
     const { data } = await api.get('/admin/services')
     return unwrapData<Service[]>(data)
@@ -262,6 +300,39 @@ export const adminApi = {
 
   async deleteWeAreTeam(id: number | string) {
     await api.delete(`/admin/we-are/team/${id}`)
+  },
+
+  async hero() {
+    const { data } = await api.get('/admin/hero')
+    return unwrapData<HeroPayload>(data)
+  },
+
+  async updateHero(payload: Record<string, unknown>) {
+    const { data } = await api.put('/admin/hero', payload)
+    return unwrapData<Hero>(data)
+  },
+
+  async createHeroGallery(form: FormData) {
+    const { data } = await api.post('/admin/hero/gallery', form, {
+      timeout: 5 * 60 * 1000,
+    })
+    return unwrapData<HeroGallery>(data)
+  },
+
+  async updateHeroGallery(id: number | string, form: FormData) {
+    const { data } = await api.post(`/admin/hero/gallery/${id}`, form, {
+      timeout: 5 * 60 * 1000,
+    })
+    return unwrapData<HeroGallery>(data)
+  },
+
+  async reorderHeroGallery(ids: number[]) {
+    const { data } = await api.post('/admin/hero/gallery/reorder', { ids })
+    return unwrapData<{ message: string }>(data)
+  },
+
+  async deleteHeroGallery(id: number | string) {
+    await api.delete(`/admin/hero/gallery/${id}`)
   },
 
   async testimonials() {

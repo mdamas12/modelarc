@@ -56,6 +56,16 @@
                                                 </td>
                                             </tr>
                                             @endif
+                                            @if ($lead->country || $lead->state || $lead->city)
+                                            <tr>
+                                                <td style="padding:0 0 14px;">
+                                                    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,244,240,0.45);">Ubicación</p>
+                                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#f7f4f0;">
+                                                        {{ collect([$lead->city, $lead->state, $lead->country])->filter()->implode(', ') }}
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                            @endif
                                             @if ($lead->project_type)
                                             <tr>
                                                 <td style="padding:0 0 14px;">

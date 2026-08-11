@@ -1,8 +1,18 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { fetchPublicCategories } from '@/services/categoryApi';
 import { fetchProjectBySlug, fetchProjects } from '@/services/projectApi';
 import { fetchProjectTour } from '@/services/virtualTourApi';
 import type { Project, VirtualTour } from '@/types/models';
+
+function titleCase(value: string): string {
+  return value
+    .replaceAll('_', ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([]);
@@ -12,10 +22,17 @@ export const useProjectStore = defineStore('project', () => {
   const error = ref<string | null>(null);
   const categoryFilter = ref('Todos');
   const searchQuery = ref('');
+  const apiCategoryNames = ref<string[]>([]);
 
   const categories = computed(() => {
-    const set = new Set(projects.value.map((p) => p.category).filter(Boolean));
-    return ['Todos', ...Array.from(set)];
+    // Prefer the admin-managed category list (keeps filters in sync even for
+    // categories with no published projects yet); fall back to deriving from
+    // loaded projects if the categories endpoint is unavailable.
+    const names = apiCategoryNames.value.length
+      ? apiCategoryNames.value
+      : Array.from(new Set(projects.value.map((p) => p.category).filter(Boolean)));
+
+    return ['Todos', ...names];
   });
 
   const filteredProjects = computed(() => {
@@ -46,6 +63,13 @@ export const useProjectStore = defineStore('project', () => {
       projects.value = [];
     } finally {
       loading.value = false;
+    }
+
+    try {
+      const apiCategories = await fetchPublicCategories();
+      apiCategoryNames.value = apiCategories.map((c) => titleCase(c.name));
+    } catch {
+      apiCategoryNames.value = [];
     }
   }
 
