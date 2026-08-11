@@ -13,9 +13,26 @@ const slug = computed(() => String(route.params.slug || ''));
 const tour = computed(() => store.currentTour);
 const gallery = computed(() => store.current?.images ?? []);
 
+const GALLERY_PAGE_SIZE = 3;
+const galleryPage = ref(0);
 const lightboxOpen = ref(false);
 const lightboxIndex = ref(0);
 const activeImage = computed(() => gallery.value[lightboxIndex.value] || null);
+
+const galleryPageCount = computed(() =>
+  Math.max(1, Math.ceil(gallery.value.length / GALLERY_PAGE_SIZE)),
+);
+
+const visibleGallery = computed(() => {
+  const start = galleryPage.value * GALLERY_PAGE_SIZE;
+  return gallery.value.slice(start, start + GALLERY_PAGE_SIZE).map((url, offset) => ({
+    url,
+    index: start + offset,
+  }));
+});
+
+const canPrevGallery = computed(() => galleryPage.value > 0);
+const canNextGallery = computed(() => galleryPage.value < galleryPageCount.value - 1);
 
 const related = computed(() =>
   store.projects
@@ -26,7 +43,18 @@ const related = computed(() =>
 async function load() {
   lightboxOpen.value = false;
   lightboxIndex.value = 0;
+  galleryPage.value = 0;
   await store.loadProject(slug.value);
+}
+
+function prevGalleryPage() {
+  if (!canPrevGallery.value) return;
+  galleryPage.value -= 1;
+}
+
+function nextGalleryPage() {
+  if (!canNextGallery.value) return;
+  galleryPage.value += 1;
 }
 
 function openLightbox(index: number) {
@@ -102,16 +130,38 @@ watch(slug, load);
 
       <section v-if="gallery.length" class="project-detail__gallery-section ma-section--cream">
         <div class="ma-container">
-          <h2 class="project-detail__section-title">Galería</h2>
-          <div class="project-detail__gallery">
+          <div class="project-detail__gallery-head">
+            <h2 class="project-detail__section-title">Galería</h2>
+            <div v-if="galleryPageCount > 1" class="project-detail__gallery-nav">
+              <button
+                type="button"
+                class="project-detail__gallery-arrow"
+                aria-label="Ver imágenes anteriores"
+                :disabled="!canPrevGallery"
+                @click="prevGalleryPage"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                class="project-detail__gallery-arrow"
+                aria-label="Ver imágenes siguientes"
+                :disabled="!canNextGallery"
+                @click="nextGalleryPage"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+          <div class="project-detail__gallery" :key="galleryPage">
             <button
-              v-for="(img, i) in gallery"
-              :key="i"
+              v-for="item in visibleGallery"
+              :key="item.index"
               type="button"
               class="project-detail__gallery-item"
-              :style="{ backgroundImage: `url(${img})` }"
-              :aria-label="`Ver imagen ${i + 1}`"
-              @click="openLightbox(i)"
+              :style="{ backgroundImage: `url(${item.url})` }"
+              :aria-label="`Ver imagen ${item.index + 1}`"
+              @click="openLightbox(item.index)"
             />
           </div>
         </div>
@@ -256,7 +306,7 @@ watch(slug, load);
   }
 
   &__section-title {
-    margin-bottom: 1rem;
+    margin-bottom: 0;
   }
 
   &__about-text {
@@ -276,11 +326,54 @@ watch(slug, load);
     padding: 1.35rem 0 2.5rem;
   }
 
+  &__gallery-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    max-width: 920px;
+  }
+
+  &__gallery-nav {
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  &__gallery-arrow {
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 1px solid rgba(26, 26, 26, 0.18);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ma-charcoal);
+    font-size: 1.45rem;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(26, 26, 26, 0.06);
+      border-color: rgba(26, 26, 26, 0.35);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+  }
+
   &__gallery {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.55rem;
     max-width: 920px;
+    animation: gallery-fade 0.28s ease;
   }
 
   &__gallery-item {
@@ -369,14 +462,25 @@ watch(slug, load);
   font-size: 0.85rem;
 }
 
+@keyframes gallery-fade {
+  from {
+    opacity: 0.35;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 1100px) {
   .project-detail__related,
   .project-detail__ba-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .project-detail__gallery {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .project-detail__gallery,
+  .project-detail__gallery-head {
     max-width: none;
   }
 }
@@ -390,6 +494,13 @@ watch(slug, load);
 
     &__gallery {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+
+    &__gallery-arrow {
+      width: 2.1rem;
+      height: 2.1rem;
+      font-size: 1.3rem;
     }
   }
 
