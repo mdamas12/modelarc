@@ -23,6 +23,8 @@ class TestimonialInvitationController extends Controller
                     'status' => $invitation->status,
                     'message' => 'Este enlace ya fue utilizado. Gracias por tu participación.',
                     'client_name' => $invitation->client_name,
+                    'project_label' => $invitation->project_label,
+                    'project_display_name' => $invitation->projectDisplayName(),
                     'project' => $invitation->project ? [
                         'id' => $invitation->project->id,
                         'title' => $invitation->project->title,

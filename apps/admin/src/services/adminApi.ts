@@ -362,6 +362,8 @@ export const adminApi = {
       client_name: string
       client_email?: string
       status: string
+      project_label?: string | null
+      project_display_name?: string | null
       project?: { id: number; title: string } | null
       public_url?: string
       sent_at?: string | null
@@ -370,7 +372,7 @@ export const adminApi = {
   },
 
   async createTestimonialInvitation(payload: {
-    project_id: number
+    project_label: string
     client_name: string
     client_email: string
   }) {

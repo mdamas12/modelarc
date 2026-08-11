@@ -3,6 +3,8 @@ import { api } from '@/boot/axios';
 export interface TestimonialInvitePayload {
   client_name: string;
   status: string;
+  project_label?: string | null;
+  project_display_name?: string | null;
   project: {
     id: number;
     title: string;

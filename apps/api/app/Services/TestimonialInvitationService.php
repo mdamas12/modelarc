@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Mail\TestimonialInvitationMail;
-use App\Models\Project;
 use App\Models\Testimonial;
 use App\Models\TestimonialInvitation;
 use Illuminate\Support\Facades\DB;
@@ -16,15 +15,14 @@ use Throwable;
 class TestimonialInvitationService
 {
     /**
-     * @param  array{project_id:int, client_name:string, client_email:string}  $data
+     * @param  array{project_label:string, client_name:string, client_email:string}  $data
      * @return array{invitation: TestimonialInvitation, mail_sent: bool, mail_error: ?string}
      */
     public function createAndSend(array $data, ?int $userId = null): array
     {
-        $project = Project::query()->findOrFail($data['project_id']);
-
         $invitation = TestimonialInvitation::query()->create([
-            'project_id' => $project->id,
+            'project_id' => null,
+            'project_label' => $data['project_label'],
             'client_name' => $data['client_name'],
             'client_email' => $data['client_email'],
             'status' => 'pending',
@@ -76,7 +74,7 @@ class TestimonialInvitationService
     protected function sendMail(TestimonialInvitation $invitation): array
     {
         $invitation->loadMissing('project');
-        $projectName = $invitation->project?->title ?? 'tu proyecto';
+        $projectName = $invitation->projectDisplayName();
         $subject = "Tu opinión sobre {$projectName} — Modelarc";
         $resendKey = (string) config('services.resend.key', '');
 
@@ -173,6 +171,7 @@ class TestimonialInvitationService
             $testimonial = Testimonial::query()->create([
                 'client_name' => $data['client_name'] ?? $locked->client_name,
                 'project_id' => $locked->project_id,
+                'project_label' => $locked->project_label,
                 'quote' => $data['quote'],
                 'rating' => $data['rating'],
                 'sort_order' => ((int) Testimonial::query()->max('sort_order')) + 1,

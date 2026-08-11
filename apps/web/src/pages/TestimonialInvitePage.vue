@@ -42,7 +42,7 @@
               </div>
               <div>
                 <dt>Proyecto</dt>
-                <dd>{{ invite?.project?.title || '—' }}</dd>
+                <dd>{{ invite?.project_display_name || invite?.project_label || invite?.project?.title || '—' }}</dd>
               </div>
               <div v-if="invite?.project?.category">
                 <dt>Categoría</dt>

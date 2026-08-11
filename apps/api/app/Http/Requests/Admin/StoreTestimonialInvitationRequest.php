@@ -17,7 +17,7 @@ class StoreTestimonialInvitationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'project_id' => ['required', 'exists:projects,id'],
+            'project_label' => ['required', 'string', 'max:255'],
             'client_name' => ['required', 'string', 'max:255'],
             'client_email' => ['required', 'email', 'max:255'],
         ];

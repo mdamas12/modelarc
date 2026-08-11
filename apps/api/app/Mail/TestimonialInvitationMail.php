@@ -17,7 +17,7 @@ class TestimonialInvitationMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $projectName = $this->invitation->project?->title ?? 'tu proyecto';
+        $projectName = $this->invitation->projectDisplayName();
 
         return new Envelope(
             subject: "Tu opinión sobre {$projectName} — Modelarc",
@@ -30,7 +30,7 @@ class TestimonialInvitationMail extends Mailable
             view: 'emails.testimonial-invitation-html',
             with: [
                 'clientName' => $this->invitation->client_name,
-                'projectName' => $this->invitation->project?->title ?? 'tu proyecto',
+                'projectName' => $this->invitation->projectDisplayName(),
                 'url' => $this->invitation->publicUrl(),
             ],
         );

@@ -11,6 +11,7 @@ class TestimonialInvitation extends Model
     protected $fillable = [
         'token',
         'project_id',
+        'project_label',
         'client_name',
         'client_email',
         'status',
@@ -19,6 +20,16 @@ class TestimonialInvitation extends Model
         'sent_at',
         'completed_at',
     ];
+
+    public function projectDisplayName(): string
+    {
+        $label = trim((string) ($this->project_label ?? ''));
+        if ($label !== '') {
+            return $label;
+        }
+
+        return $this->project?->title ?? 'tu proyecto';
+    }
 
     protected function casts(): array
     {

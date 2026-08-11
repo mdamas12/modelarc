@@ -25,7 +25,7 @@
           <q-item-section>
             <q-item-label>{{ inv.client_name }} · {{ inv.client_email }}</q-item-label>
             <q-item-label caption>
-              {{ inv.project?.title || 'Sin proyecto' }}
+              {{ inv.project_label || inv.project?.title || 'Sin proyecto' }}
               · {{ labelInviteStatus(inv.status) }}
             </q-item-label>
           </q-item-section>
@@ -168,32 +168,11 @@
             <div class="text-caption q-mb-xs">Valoración</div>
             <q-rating v-model="form.rating" size="28px" color="primary" />
           </div>
-          <q-select
-            v-model="form.project_id"
-            outlined
-            emit-value
-            map-options
-            clearable
-            use-input
-            input-debounce="0"
-            label="Proyecto (opcional)"
-            :options="filteredProjectOptions"
-            :loading="loadingProjects"
-            @filter="filterProjects"
-          >
-            <template #no-option>
-              <q-item>
-                <q-item-section class="text-grey">
-                  {{ loadingProjects ? 'Cargando proyectos…' : 'No hay proyectos' }}
-                </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
           <q-input
             v-model="form.project_label"
             outlined
-            label="Proyecto / referencia (opcional)"
-            hint="Texto libre a mostrar si no se vincula un proyecto, ej. 'Reforma integral · Providencia'"
+            label="Proyecto *"
+            hint="Escribe el nombre del proyecto o referencia, ej. 'Reforma integral · Providencia'"
           />
           <q-input v-model.number="form.sort_order" outlined type="number" label="Orden" />
           <q-select
@@ -221,17 +200,11 @@
           </div>
         </q-card-section>
         <q-card-section class="q-gutter-md">
-          <q-select
-            v-model="inviteForm.project_id"
+          <q-input
+            v-model="inviteForm.project_label"
             outlined
-            emit-value
-            map-options
-            use-input
-            input-debounce="0"
             label="Proyecto *"
-            :options="filteredProjectOptions"
-            :loading="loadingProjects"
-            @filter="filterProjects"
+            hint="Escribe el nombre del proyecto"
           />
           <q-input v-model="inviteForm.client_name" outlined label="Nombre del cliente *" />
           <q-input v-model="inviteForm.client_email" outlined type="email" label="Email del cliente *" />
@@ -259,14 +232,13 @@ import { useQuasar } from 'quasar'
 import { adminApi } from '@/services/adminApi'
 import type { Testimonial } from '@/types'
 
-type ProjectOption = { label: string; value: number }
-
 type InvitationRow = {
   id: number
   token?: string
   client_name: string
   client_email?: string
   status: string
+  project_label?: string | null
   project?: { id: number; title: string } | null
   public_url?: string
 }
@@ -275,15 +247,12 @@ const $q = useQuasar()
 const loading = ref(false)
 const saving = ref(false)
 const inviting = ref(false)
-const loadingProjects = ref(false)
 const dialog = ref(false)
 const inviteDialog = ref(false)
 const editingId = ref<number | null>(null)
 const resendingId = ref<number | null>(null)
 const rows = ref<Testimonial[]>([])
 const invitations = ref<InvitationRow[]>([])
-const projectOptions = ref<ProjectOption[]>([])
-const filteredProjectOptions = ref<ProjectOption[]>([])
 
 const form = reactive({
   client_name: '',
@@ -296,7 +265,7 @@ const form = reactive({
 })
 
 const inviteForm = reactive({
-  project_id: null as number | null,
+  project_label: '',
   client_name: '',
   client_email: '',
 })
@@ -331,65 +300,35 @@ function resetForm() {
 
 function resetInviteForm() {
   Object.assign(inviteForm, {
-    project_id: null,
+    project_label: '',
     client_name: '',
     client_email: '',
   })
 }
 
-async function loadProjects() {
-  loadingProjects.value = true
-  try {
-    const res = await adminApi.projects({ per_page: 100 })
-    projectOptions.value = (res.data || []).map((p) => ({
-      label: p.title,
-      value: p.id,
-    }))
-    filteredProjectOptions.value = projectOptions.value
-  } catch {
-    projectOptions.value = []
-    filteredProjectOptions.value = []
-    $q.notify({ type: 'negative', message: 'No se pudieron cargar los proyectos' })
-  } finally {
-    loadingProjects.value = false
-  }
-}
-
-function filterProjects(val: string, update: (fn: () => void) => void) {
-  update(() => {
-    const needle = val.trim().toLowerCase()
-    filteredProjectOptions.value = needle
-      ? projectOptions.value.filter((p) => p.label.toLowerCase().includes(needle))
-      : projectOptions.value
-  })
-}
-
-async function openCreate() {
+function openCreate() {
   editingId.value = null
   resetForm()
   dialog.value = true
-  await loadProjects()
 }
 
-async function openInvite() {
+function openInvite() {
   resetInviteForm()
   inviteDialog.value = true
-  await loadProjects()
 }
 
-async function openEdit(row: Testimonial) {
+function openEdit(row: Testimonial) {
   editingId.value = row.id
   Object.assign(form, {
     client_name: row.client_name,
     quote: row.quote,
     rating: row.rating ?? 5,
-    project_id: row.project?.id ?? row.project_id ?? null,
-    project_label: row.project_label ?? '',
+    project_id: null,
+    project_label: row.project_label || row.project?.title || '',
     sort_order: row.sort_order ?? 0,
     status: row.status || 'active',
   })
   dialog.value = true
-  await loadProjects()
 }
 
 async function loadInvitations() {
@@ -415,16 +354,16 @@ async function load() {
 }
 
 async function sendInvite() {
-  if (!inviteForm.project_id || !inviteForm.client_name || !inviteForm.client_email) {
+  if (!inviteForm.project_label.trim() || !inviteForm.client_name.trim() || !inviteForm.client_email.trim()) {
     $q.notify({ type: 'warning', message: 'Proyecto, nombre y email son requeridos' })
     return
   }
   inviting.value = true
   try {
     const res = await adminApi.createTestimonialInvitation({
-      project_id: inviteForm.project_id,
-      client_name: inviteForm.client_name,
-      client_email: inviteForm.client_email,
+      project_label: inviteForm.project_label.trim(),
+      client_name: inviteForm.client_name.trim(),
+      client_email: inviteForm.client_email.trim(),
     })
     inviteDialog.value = false
     const url = res.meta?.public_url || res.data?.public_url
@@ -503,13 +442,21 @@ async function removeInvitation(id: number) {
 }
 
 async function save() {
-  if (!form.client_name || !form.quote) {
-    $q.notify({ type: 'warning', message: 'Cliente y cita son requeridos' })
+  if (!form.client_name || !form.quote || !form.project_label.trim()) {
+    $q.notify({ type: 'warning', message: 'Cliente, proyecto y cita son requeridos' })
     return
   }
   saving.value = true
   try {
-    const payload = { ...form }
+    const payload = {
+      client_name: form.client_name,
+      quote: form.quote,
+      rating: form.rating,
+      project_id: null,
+      project_label: form.project_label.trim(),
+      sort_order: form.sort_order,
+      status: form.status,
+    }
     if (editingId.value) {
       await adminApi.updateTestimonial(editingId.value, payload)
     } else {
