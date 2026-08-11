@@ -1,24 +1,34 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import type { ICity, ICountry, IState } from 'country-state-city';
 import SectionHeader from '@/components/common/SectionHeader.vue';
 import {
-  COUNTRIES,
-  citiesFor,
-  hasMappedStates,
-  statesFor,
+  defaultCountryName,
+  ensureLocationData,
+  findCountryByName,
+  getAllCountries,
+  getCitiesOfState,
+  getStatesOfCountry,
 } from '@/data/locations';
 import { submitContact } from '@/services/contactApi';
 import type { ContactPayload } from '@/types/models';
 
 const $q = useQuasar();
 const sending = ref(false);
+const locationsReady = ref(false);
+
+const countries = ref<ICountry[]>([]);
+const states = ref<IState[]>([]);
+const cities = ref<ICity[]>([]);
+const countryIso = ref('');
+const stateIso = ref('');
 
 const form = reactive<ContactPayload>({
   name: '',
   email: '',
   phone: '',
-  country: 'Venezuela',
+  country: '',
   state: '',
   city: '',
   service: 'Diseño arquitectónico',
@@ -56,24 +66,68 @@ const socialLinks = [
   },
 ];
 
-const states = computed(() => statesFor(form.country || ''));
-const cities = computed(() => citiesFor(form.country || '', form.state || ''));
-const mappedCountry = computed(() => hasMappedStates(form.country || ''));
+const hasStates = computed(() => states.value.length > 0);
+const hasCities = computed(() => cities.value.length > 0);
+
+function resetLocationToDefault() {
+  const name = defaultCountryName();
+  form.country = name;
+  applyCountry(name, { resetLower: true });
+}
+
+function applyCountry(countryName: string, opts: { resetLower: boolean }) {
+  const country = findCountryByName(countryName);
+  countryIso.value = country?.isoCode ?? '';
+  states.value = countryIso.value ? getStatesOfCountry(countryIso.value) : [];
+  if (opts.resetLower) {
+    form.state = '';
+    form.city = '';
+    stateIso.value = '';
+    cities.value = [];
+  }
+}
+
+function applyState(stateName: string, opts: { resetCity: boolean }) {
+  const match = states.value.find((s) => s.name === stateName);
+  stateIso.value = match?.isoCode ?? '';
+  cities.value =
+    countryIso.value && stateIso.value
+      ? getCitiesOfState(countryIso.value, stateIso.value)
+      : [];
+  if (opts.resetCity) {
+    form.city = '';
+  }
+}
 
 watch(
   () => form.country,
-  () => {
-    form.state = '';
-    form.city = '';
+  (countryName) => {
+    if (!locationsReady.value || !countryName) return;
+    applyCountry(countryName, { resetLower: true });
   },
 );
 
 watch(
   () => form.state,
-  () => {
-    form.city = '';
+  (stateName) => {
+    if (!locationsReady.value || !stateName || !hasStates.value) return;
+    applyState(stateName, { resetCity: true });
   },
 );
+
+onMounted(async () => {
+  try {
+    await ensureLocationData();
+    countries.value = getAllCountries();
+    locationsReady.value = true;
+    resetLocationToDefault();
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudieron cargar países y ciudades. Recarga la página.',
+    });
+  }
+});
 
 async function onSubmit() {
   if (!form.name || !form.email || !form.message || !form.country || !form.state || !form.city) {
@@ -87,10 +141,14 @@ async function onSubmit() {
     form.name = '';
     form.email = '';
     form.phone = '';
-    form.country = 'Venezuela';
-    form.state = '';
-    form.city = '';
     form.message = '';
+    if (locationsReady.value) {
+      resetLocationToDefault();
+    } else {
+      form.country = '';
+      form.state = '';
+      form.city = '';
+    }
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo enviar el mensaje. Intenta de nuevo.' });
   } finally {
@@ -135,30 +193,49 @@ async function onSubmit() {
           </label>
           <label>
             País
-            <select v-model="form.country" required>
-              <option disabled value="">Selecciona un país</option>
-              <option v-for="c in COUNTRIES" :key="c" :value="c">{{ c }}</option>
+            <select v-model="form.country" required :disabled="!locationsReady">
+              <option disabled value="">
+                {{ locationsReady ? 'Selecciona un país' : 'Cargando países…' }}
+              </option>
+              <option v-for="c in countries" :key="c.isoCode" :value="c.name">{{ c.name }}</option>
             </select>
           </label>
           <label>
-            Estado
-            <select v-if="mappedCountry" v-model="form.state" required>
+            Estado / Provincia
+            <select
+              v-if="hasStates"
+              v-model="form.state"
+              required
+              :disabled="!form.country"
+            >
               <option disabled value="">Selecciona un estado</option>
-              <option v-for="s in states" :key="s" :value="s">{{ s }}</option>
+              <option v-for="s in states" :key="s.isoCode" :value="s.name">{{ s.name }}</option>
             </select>
             <input
               v-else
               v-model="form.state"
               type="text"
               required
+              :disabled="!form.country || !locationsReady"
               placeholder="Escribe el estado / provincia"
             />
           </label>
           <label>
             Ciudad
-            <select v-if="mappedCountry && cities.length" v-model="form.city" required>
+            <select
+              v-if="hasCities"
+              v-model="form.city"
+              required
+              :disabled="!form.state"
+            >
               <option disabled value="">Selecciona una ciudad</option>
-              <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
+              <option
+                v-for="city in cities"
+                :key="`${city.name}-${city.latitude}-${city.longitude}`"
+                :value="city.name"
+              >
+                {{ city.name }}
+              </option>
             </select>
             <input
               v-else
