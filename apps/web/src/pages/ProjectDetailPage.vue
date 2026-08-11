@@ -13,19 +13,20 @@ const slug = computed(() => String(route.params.slug || ''));
 const tour = computed(() => store.currentTour);
 const gallery = computed(() => store.current?.images ?? []);
 
-const GALLERY_PAGE_SIZE = 3;
+const galleryPageSize = ref(3);
 const galleryPage = ref(0);
 const lightboxOpen = ref(false);
 const lightboxIndex = ref(0);
 const activeImage = computed(() => gallery.value[lightboxIndex.value] || null);
 
 const galleryPageCount = computed(() =>
-  Math.max(1, Math.ceil(gallery.value.length / GALLERY_PAGE_SIZE)),
+  Math.max(1, Math.ceil(gallery.value.length / galleryPageSize.value)),
 );
 
 const visibleGallery = computed(() => {
-  const start = galleryPage.value * GALLERY_PAGE_SIZE;
-  return gallery.value.slice(start, start + GALLERY_PAGE_SIZE).map((url, offset) => ({
+  const size = galleryPageSize.value;
+  const start = galleryPage.value * size;
+  return gallery.value.slice(start, start + size).map((url, offset) => ({
     url,
     index: start + offset,
   }));
@@ -40,11 +41,25 @@ const related = computed(() =>
     .slice(0, 2),
 );
 
+function syncGalleryPageSize() {
+  const nextSize = window.matchMedia('(max-width: 800px)').matches ? 1 : 3;
+  if (galleryPageSize.value === nextSize) return;
+  const firstIndex = galleryPage.value * galleryPageSize.value;
+  galleryPageSize.value = nextSize;
+  galleryPage.value = Math.floor(firstIndex / nextSize);
+}
+
+function clampGalleryPage() {
+  const maxPage = Math.max(0, galleryPageCount.value - 1);
+  if (galleryPage.value > maxPage) galleryPage.value = maxPage;
+}
+
 async function load() {
   lightboxOpen.value = false;
   lightboxIndex.value = 0;
   galleryPage.value = 0;
   await store.loadProject(slug.value);
+  clampGalleryPage();
 }
 
 function prevGalleryPage() {
@@ -80,15 +95,19 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  syncGalleryPageSize();
   void load();
   window.addEventListener('keydown', onKeydown);
+  window.addEventListener('resize', syncGalleryPageSize);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown);
+  window.removeEventListener('resize', syncGalleryPageSize);
 });
 
 watch(slug, load);
+watch(galleryPageCount, clampGalleryPage);
 </script>
 
 <template>
@@ -153,7 +172,11 @@ watch(slug, load);
               </button>
             </div>
           </div>
-          <div class="project-detail__gallery" :key="galleryPage">
+          <div
+            class="project-detail__gallery"
+            :class="{ 'project-detail__gallery--single': galleryPageSize === 1 }"
+            :key="`${galleryPageSize}-${galleryPage}`"
+          >
             <button
               v-for="item in visibleGallery"
               :key="item.index"
@@ -332,7 +355,6 @@ watch(slug, load);
     justify-content: space-between;
     gap: 1rem;
     margin-bottom: 1rem;
-    max-width: 920px;
   }
 
   &__gallery-nav {
@@ -371,13 +393,18 @@ watch(slug, load);
   &__gallery {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.55rem;
-    max-width: 920px;
+    gap: 0.75rem;
+    width: 100%;
     animation: gallery-fade 0.28s ease;
+
+    &--single {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   &__gallery-item {
     aspect-ratio: 1;
+    width: 100%;
     border: 0;
     padding: 0;
     background-size: cover;
@@ -478,11 +505,6 @@ watch(slug, load);
   .project-detail__ba-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .project-detail__gallery,
-  .project-detail__gallery-head {
-    max-width: none;
-  }
 }
 
 @media (max-width: 800px) {
@@ -493,8 +515,13 @@ watch(slug, load);
     }
 
     &__gallery {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.4rem;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+
+    &__gallery-item {
+      aspect-ratio: 4 / 3;
+      max-height: min(68vw, 420px);
     }
 
     &__gallery-arrow {
