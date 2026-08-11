@@ -76,6 +76,15 @@
             <q-btn
               flat
               dense
+              no-caps
+              color="primary"
+              icon="add"
+              label="Subcategoría"
+              @click="openCreateSubcategory(category)"
+            />
+            <q-btn
+              flat
+              dense
               round
               icon="edit"
               color="primary"
@@ -374,6 +383,7 @@ async function moveCategory(index: number, dir: number) {
 
 function openCreateSubcategory(category: Category) {
   activeCategory.value = category
+  expanded.value = new Set([...expanded.value, category.id])
   editingSubcategoryId.value = null
   Object.assign(subcategoryForm, {
     name: '',
