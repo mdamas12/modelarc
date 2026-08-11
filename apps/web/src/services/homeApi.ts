@@ -23,10 +23,10 @@ export interface HeroGalleryImage {
 
 export interface HomePayload {
   featuredProjects: Project[];
+  featuredTours: VirtualTour[];
   services: ServiceItem[];
   testimonials: Testimonial[];
   settings: Record<string, string>;
-  featuredTour: VirtualTour | null;
   hero: HeroContent;
   heroGalleries: HeroGalleryImage[];
 }
@@ -50,6 +50,10 @@ export async function fetchHome(): Promise<HomePayload> {
     ? payload.featured_projects.map((item) => mapProject(item as Record<string, unknown>))
     : [];
 
+  const featuredTours = Array.isArray(payload.featured_tours)
+    ? payload.featured_tours.map((item) => mapTour(item as Record<string, unknown>))
+    : [];
+
   const services = Array.isArray(payload.services)
     ? payload.services.map((item, index) => mapService(item as Record<string, unknown>, index))
     : [];
@@ -68,22 +72,6 @@ export async function fetchHome(): Promise<HomePayload> {
         )
       : {};
 
-  const featuredWithTour = featuredProjects.find((project) => project.hasVirtualTour);
-  let featuredTour: VirtualTour | null = null;
-
-  if (featuredWithTour) {
-    try {
-      const tourResponse = await api.get(`/public/projects/${featuredWithTour.slug}/tour`);
-      featuredTour = mapTour(
-        extractResource<Record<string, unknown>>(tourResponse.data),
-        featuredWithTour.coverImage,
-        featuredWithTour.slug,
-      );
-    } catch {
-      featuredTour = null;
-    }
-  }
-
   const rawHero = (payload.hero as Record<string, unknown> | null | undefined) ?? {};
   const hero: HeroContent = {
     text1: String(rawHero.text_1 ?? ''),
@@ -101,10 +89,10 @@ export async function fetchHome(): Promise<HomePayload> {
 
   return {
     featuredProjects,
+    featuredTours,
     services,
     testimonials,
     settings,
-    featuredTour,
     hero,
     heroGalleries,
   };

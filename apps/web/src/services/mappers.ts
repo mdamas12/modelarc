@@ -184,7 +184,18 @@ export function mapTour(
         .map(({ sortOrder: _sortOrder, ...scene }) => scene)
     : [];
 
-  const project = raw.project as { slug?: string; cover_media?: unknown } | null | undefined;
+  const project = raw.project as
+    | {
+        slug?: string;
+        cover_media?: unknown;
+        location?: string;
+        year?: number;
+        category?: string;
+        project_type?: { name?: string };
+        category_ref?: { name?: string };
+      }
+    | null
+    | undefined;
   const cover =
     fallbackCover ??
     mediaUrl(project?.cover_media) ??
@@ -202,6 +213,13 @@ export function mapTour(
 
   const resolvedProjectSlug = projectSlug ?? (project?.slug ? String(project.slug) : undefined);
   if (resolvedProjectSlug) tour.projectSlug = resolvedProjectSlug;
+
+  const categoryName = titleCase(
+    project?.category_ref?.name ?? project?.project_type?.name ?? String(project?.category ?? ''),
+  );
+  if (categoryName) tour.category = categoryName;
+  if (project?.location) tour.location = String(project.location);
+  if (project?.year != null) tour.year = Number(project.year);
 
   return tour;
 }

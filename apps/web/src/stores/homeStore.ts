@@ -7,9 +7,9 @@ const EMPTY_HERO: HeroContent = { text1: '', text2: '', text3: '' };
 
 export const useHomeStore = defineStore('home', () => {
   const featuredProjects = ref<Project[]>([]);
+  const featuredTours = ref<VirtualTour[]>([]);
   const services = ref<ServiceItem[]>([]);
   const testimonials = ref<Testimonial[]>([]);
-  const featuredTour = ref<VirtualTour | null>(null);
   const settings = ref<Record<string, string>>({});
   const hero = ref<HeroContent>({ ...EMPTY_HERO });
   const heroGalleries = ref<HeroGalleryImage[]>([]);
@@ -24,9 +24,9 @@ export const useHomeStore = defineStore('home', () => {
     try {
       const payload: HomePayload = await fetchHome();
       featuredProjects.value = payload.featuredProjects;
+      featuredTours.value = payload.featuredTours;
       services.value = payload.services;
       testimonials.value = payload.testimonials;
-      featuredTour.value = payload.featuredTour;
       settings.value = payload.settings;
       hero.value = payload.hero;
       heroGalleries.value = payload.heroGalleries;
@@ -34,9 +34,9 @@ export const useHomeStore = defineStore('home', () => {
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Error al cargar el inicio';
       featuredProjects.value = [];
+      featuredTours.value = [];
       services.value = [];
       testimonials.value = [];
-      featuredTour.value = null;
       hero.value = { ...EMPTY_HERO };
       heroGalleries.value = [];
     } finally {
@@ -46,9 +46,9 @@ export const useHomeStore = defineStore('home', () => {
 
   return {
     featuredProjects,
+    featuredTours,
     services,
     testimonials,
-    featuredTour,
     settings,
     hero,
     heroGalleries,

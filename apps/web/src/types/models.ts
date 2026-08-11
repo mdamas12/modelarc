@@ -55,6 +55,9 @@ export interface VirtualTour {
   description: string;
   coverImage: string;
   projectSlug?: string;
+  category?: string;
+  location?: string;
+  year?: number;
   scenes: TourScene[];
 }
 
