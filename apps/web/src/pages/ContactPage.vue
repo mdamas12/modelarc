@@ -1,27 +1,30 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
-import { City, Country, State } from 'country-state-city';
 import SectionHeader from '@/components/common/SectionHeader.vue';
 import { submitContact } from '@/services/contactApi';
 import type { ContactPayload } from '@/types/models';
 
 const $q = useQuasar();
 const sending = ref(false);
+const loadingCountries = ref(false);
+const loadingStates = ref(false);
+const loadingCities = ref(false);
 
 const form = reactive<ContactPayload>({
   name: '',
   email: '',
   phone: '',
-  country: '',
+  country: 'Venezuela',
   state: '',
   city: '',
   service: 'Diseño arquitectónico',
   message: '',
 });
 
-const countryCode = ref('');
-const stateCode = ref('');
+const countries = ref<string[]>([]);
+const states = ref<string[]>([]);
+const cities = ref<string[]>([]);
 
 const services = [
   'Diseño arquitectónico',
@@ -54,42 +57,111 @@ const socialLinks = [
   },
 ];
 
-const countries = Country.getAllCountries().map((c) => ({
-  code: c.isoCode,
-  name: c.name,
-}));
+const canPickState = computed(() => Boolean(form.country));
+const canPickCity = computed(() => Boolean(form.country && form.state));
 
-const states = computed(() => {
-  if (!countryCode.value) return [];
-  return State.getStatesOfCountry(countryCode.value).map((s) => ({
-    code: s.isoCode,
-    name: s.name,
-  }));
-});
-
-const cities = computed(() => {
-  if (!countryCode.value || !stateCode.value) return [];
-  return City.getCitiesOfState(countryCode.value, stateCode.value).map((c) => c.name);
-});
-
-const venezuela = countries.find((c) => c.code === 'VE');
-if (venezuela) {
-  countryCode.value = venezuela.code;
-  form.country = venezuela.name;
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as T;
 }
 
-watch(countryCode, (code) => {
-  const selected = countries.find((c) => c.code === code);
-  form.country = selected?.name || '';
-  stateCode.value = '';
-  form.state = '';
-  form.city = '';
-});
+async function loadCountries() {
+  loadingCountries.value = true;
+  try {
+    const data = await fetchJson<{ data?: Array<{ country?: string }> }>(
+      'https://countriesnow.space/api/v0.1/countries/positions',
+    );
+    const names = (data.data || [])
+      .map((item) => String(item.country || '').trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'es'));
+    countries.value = names;
+    if (!names.includes(form.country) && names.includes('Venezuela')) {
+      form.country = 'Venezuela';
+    }
+  } catch {
+    countries.value = ['Venezuela', 'Colombia', 'Estados Unidos', 'España', 'México', 'Panamá'];
+  } finally {
+    loadingCountries.value = false;
+  }
+}
 
-watch(stateCode, (code) => {
-  const selected = states.value.find((s) => s.code === code);
-  form.state = selected?.name || '';
-  form.city = '';
+async function loadStates(country: string) {
+  if (!country) {
+    states.value = [];
+    return;
+  }
+  loadingStates.value = true;
+  try {
+    const data = await fetchJson<{ data?: { states?: Array<{ name?: string }> } }>(
+      'https://countriesnow.space/api/v0.1/countries/states',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country }),
+      },
+    );
+    states.value = (data.data?.states || [])
+      .map((s) => String(s.name || '').trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'es'));
+  } catch {
+    states.value = [];
+    $q.notify({ type: 'warning', message: 'No se pudieron cargar los estados. Intenta de nuevo.' });
+  } finally {
+    loadingStates.value = false;
+  }
+}
+
+async function loadCities(country: string, state: string) {
+  if (!country || !state) {
+    cities.value = [];
+    return;
+  }
+  loadingCities.value = true;
+  try {
+    const data = await fetchJson<{ data?: string[] }>(
+      'https://countriesnow.space/api/v0.1/countries/state/cities',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country, state }),
+      },
+    );
+    cities.value = (data.data || [])
+      .map((c) => String(c || '').trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'es'));
+  } catch {
+    cities.value = [];
+    $q.notify({ type: 'warning', message: 'No se pudieron cargar las ciudades. Intenta de nuevo.' });
+  } finally {
+    loadingCities.value = false;
+  }
+}
+
+watch(
+  () => form.country,
+  async (country) => {
+    form.state = '';
+    form.city = '';
+    cities.value = [];
+    await loadStates(country);
+  },
+);
+
+watch(
+  () => form.state,
+  async (state) => {
+    form.city = '';
+    await loadCities(form.country, state);
+  },
+);
+
+onMounted(async () => {
+  await loadCountries();
+  await loadStates(form.country);
 });
 
 async function onSubmit() {
@@ -104,17 +176,12 @@ async function onSubmit() {
     form.name = '';
     form.email = '';
     form.phone = '';
+    form.country = 'Venezuela';
+    form.state = '';
     form.city = '';
     form.message = '';
-    stateCode.value = '';
-    form.state = '';
-    if (venezuela) {
-      countryCode.value = venezuela.code;
-      form.country = venezuela.name;
-    } else {
-      countryCode.value = '';
-      form.country = '';
-    }
+    cities.value = [];
+    await loadStates(form.country);
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo enviar el mensaje. Intenta de nuevo.' });
   } finally {
@@ -159,27 +226,35 @@ async function onSubmit() {
           </label>
           <label>
             País
-            <select v-model="countryCode" required>
+            <select v-model="form.country" required :disabled="loadingCountries">
               <option disabled value="">Selecciona un país</option>
-              <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }}</option>
+              <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
           <label>
             Estado
-            <select v-model="stateCode" required :disabled="!countryCode || !states.length">
-              <option disabled value="">Selecciona un estado</option>
-              <option v-for="s in states" :key="s.code" :value="s.code">{{ s.name }}</option>
+            <select
+              v-model="form.state"
+              required
+              :disabled="!canPickState || loadingStates || !states.length"
+            >
+              <option disabled value="">
+                {{ loadingStates ? 'Cargando estados…' : 'Selecciona un estado' }}
+              </option>
+              <option v-for="s in states" :key="s" :value="s">{{ s }}</option>
             </select>
           </label>
           <label>
             Ciudad
             <select
-              v-if="cities.length"
+              v-if="cities.length || loadingCities"
               v-model="form.city"
               required
-              :disabled="!stateCode"
+              :disabled="!canPickCity || loadingCities"
             >
-              <option disabled value="">Selecciona una ciudad</option>
+              <option disabled value="">
+                {{ loadingCities ? 'Cargando ciudades…' : 'Selecciona una ciudad' }}
+              </option>
               <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
             </select>
             <input
@@ -187,7 +262,7 @@ async function onSubmit() {
               v-model="form.city"
               type="text"
               required
-              :disabled="!stateCode"
+              :disabled="!canPickCity"
               placeholder="Escribe la ciudad"
             />
           </label>
@@ -235,46 +310,30 @@ async function onSubmit() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-              <svg
-                v-if="item.icon === 'instagram'"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3.5A4.5 4.5 0 1112 16a4.5 4.5 0 010-9zm0 2A2.5 2.5 0 1014.5 12 2.5 2.5 0 0012 7.5zm5.25-.75a1 1 0 11-1 1 1 1 0 011-1z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'facebook'"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'whatsapp'"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.89.49 3.73 1.42 5.36L2 22l4.89-1.52a9.86 9.86 0 004.95 1.26h.01c5.46 0 9.91-4.45 9.91-9.91C21.76 6.45 17.5 2 12.04 2zm5.76 14.05c-.24.68-1.4 1.25-1.94 1.33-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.93-4.36-.14-.19-1.15-1.53-1.15-2.92 0-1.39.73-2.07.99-2.36.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.66.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.1.19-.14.31-.28.48-.14.17-.3.38-.42.51-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.7-.81.89-1.09.19-.28.38-.23.64-.14.26.1 1.66.78 1.95.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'gmail'"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"
-                />
-              </svg>
+                <svg v-if="item.icon === 'instagram'" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3.5A4.5 4.5 0 1112 16a4.5 4.5 0 010-9zm0 2A2.5 2.5 0 1014.5 12 2.5 2.5 0 0012 7.5zm5.25-.75a1 1 0 11-1 1 1 1 0 011-1z"
+                  />
+                </svg>
+                <svg v-else-if="item.icon === 'facebook'" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1z"
+                  />
+                </svg>
+                <svg v-else-if="item.icon === 'whatsapp'" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.89.49 3.73 1.42 5.36L2 22l4.89-1.52a9.86 9.86 0 004.95 1.26h.01c5.46 0 9.91-4.45 9.91-9.91C21.76 6.45 17.5 2 12.04 2zm5.76 14.05c-.24.68-1.4 1.25-1.94 1.33-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.93-4.36-.14-.19-1.15-1.53-1.15-2.92 0-1.39.73-2.07.99-2.36.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.66.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.1.19-.14.31-.28.48-.14.17-.3.38-.42.51-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.44.12.6-.07.16-.19.7-.81.89-1.09.19-.28.38-.23.64-.14.26.1 1.66.78 1.95.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z"
+                  />
+                </svg>
+                <svg v-else-if="item.icon === 'gmail'" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"
+                  />
+                </svg>
               </a>
             </div>
           </div>

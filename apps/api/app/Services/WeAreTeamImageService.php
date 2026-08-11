@@ -7,7 +7,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 use Throwable;
 
 class WeAreTeamImageService
@@ -86,15 +87,55 @@ class WeAreTeamImageService
 
         try {
             $disk = Storage::disk('public');
-            $contents = $disk->get($originalPath);
-            if ($contents === null) {
+            $absolute = $disk->path($originalPath);
+            if (! is_file($absolute)) {
                 return null;
             }
 
-            $resized = Image::read($contents)->scaleDown(width: self::DISPLAY_MAX_WIDTH);
-            $filename = pathinfo($originalPath, PATHINFO_FILENAME).'_display.webp';
+            // Prefer GD native resize for large originals (avoids facade conflicts / memory spikes).
+            $info = @getimagesize($absolute);
+            if (! $info) {
+                return null;
+            }
+
+            [$width, $height] = $info;
+            $mime = $info['mime'] ?? '';
+            $src = match ($mime) {
+                'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($absolute),
+                'image/png' => @imagecreatefrompng($absolute),
+                'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($absolute) : false,
+                'image/gif' => @imagecreatefromgif($absolute),
+                default => false,
+            };
+
+            if ($src === false) {
+                $manager = new ImageManager(new Driver());
+                $resized = $manager->read($absolute)->scaleDown(width: self::DISPLAY_MAX_WIDTH);
+                $filename = pathinfo($originalPath, PATHINFO_FILENAME).'_display.jpg';
+                $displayPath = self::FOLDER.'/'.$filename;
+                $disk->put($displayPath, (string) $resized->toJpeg(90));
+
+                return $displayPath;
+            }
+
+            $targetWidth = min(self::DISPLAY_MAX_WIDTH, (int) $width);
+            $targetHeight = (int) round($height * ($targetWidth / max(1, $width)));
+            $dst = imagecreatetruecolor($targetWidth, $targetHeight);
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $targetWidth, $targetHeight, (int) $width, (int) $height);
+
+            ob_start();
+            imagejpeg($dst, null, 90);
+            $encoded = ob_get_clean();
+            imagedestroy($src);
+            imagedestroy($dst);
+
+            if ($encoded === false || $encoded === '') {
+                return null;
+            }
+
+            $filename = pathinfo($originalPath, PATHINFO_FILENAME).'_display.jpg';
             $displayPath = self::FOLDER.'/'.$filename;
-            $disk->put($displayPath, (string) $resized->toWebp(90));
+            $disk->put($displayPath, $encoded);
 
             return $displayPath;
         } catch (Throwable $e) {
