@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import SectionHeader from '@/components/common/SectionHeader.vue';
+import {
+  COUNTRIES,
+  citiesFor,
+  hasMappedStates,
+  statesFor,
+} from '@/data/locations';
 import { submitContact } from '@/services/contactApi';
 import type { ContactPayload } from '@/types/models';
 
 const $q = useQuasar();
 const sending = ref(false);
-const loadingCountries = ref(false);
-const loadingStates = ref(false);
-const loadingCities = ref(false);
 
 const form = reactive<ContactPayload>({
   name: '',
@@ -21,10 +24,6 @@ const form = reactive<ContactPayload>({
   service: 'Diseño arquitectónico',
   message: '',
 });
-
-const countries = ref<string[]>([]);
-const states = ref<string[]>([]);
-const cities = ref<string[]>([]);
 
 const services = [
   'Diseño arquitectónico',
@@ -57,112 +56,24 @@ const socialLinks = [
   },
 ];
 
-const canPickState = computed(() => Boolean(form.country));
-const canPickCity = computed(() => Boolean(form.country && form.state));
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as T;
-}
-
-async function loadCountries() {
-  loadingCountries.value = true;
-  try {
-    const data = await fetchJson<{ data?: Array<{ country?: string }> }>(
-      'https://countriesnow.space/api/v0.1/countries/positions',
-    );
-    const names = (data.data || [])
-      .map((item) => String(item.country || '').trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, 'es'));
-    countries.value = names;
-    if (!names.includes(form.country) && names.includes('Venezuela')) {
-      form.country = 'Venezuela';
-    }
-  } catch {
-    countries.value = ['Venezuela', 'Colombia', 'Estados Unidos', 'España', 'México', 'Panamá'];
-  } finally {
-    loadingCountries.value = false;
-  }
-}
-
-async function loadStates(country: string) {
-  if (!country) {
-    states.value = [];
-    return;
-  }
-  loadingStates.value = true;
-  try {
-    const data = await fetchJson<{ data?: { states?: Array<{ name?: string }> } }>(
-      'https://countriesnow.space/api/v0.1/countries/states',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country }),
-      },
-    );
-    states.value = (data.data?.states || [])
-      .map((s) => String(s.name || '').trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, 'es'));
-  } catch {
-    states.value = [];
-    $q.notify({ type: 'warning', message: 'No se pudieron cargar los estados. Intenta de nuevo.' });
-  } finally {
-    loadingStates.value = false;
-  }
-}
-
-async function loadCities(country: string, state: string) {
-  if (!country || !state) {
-    cities.value = [];
-    return;
-  }
-  loadingCities.value = true;
-  try {
-    const data = await fetchJson<{ data?: string[] }>(
-      'https://countriesnow.space/api/v0.1/countries/state/cities',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country, state }),
-      },
-    );
-    cities.value = (data.data || [])
-      .map((c) => String(c || '').trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, 'es'));
-  } catch {
-    cities.value = [];
-    $q.notify({ type: 'warning', message: 'No se pudieron cargar las ciudades. Intenta de nuevo.' });
-  } finally {
-    loadingCities.value = false;
-  }
-}
+const states = computed(() => statesFor(form.country || ''));
+const cities = computed(() => citiesFor(form.country || '', form.state || ''));
+const mappedCountry = computed(() => hasMappedStates(form.country || ''));
 
 watch(
   () => form.country,
-  async (country) => {
+  () => {
     form.state = '';
     form.city = '';
-    cities.value = [];
-    await loadStates(country);
   },
 );
 
 watch(
   () => form.state,
-  async (state) => {
+  () => {
     form.city = '';
-    await loadCities(form.country, state);
   },
 );
-
-onMounted(async () => {
-  await loadCountries();
-  await loadStates(form.country);
-});
 
 async function onSubmit() {
   if (!form.name || !form.email || !form.message || !form.country || !form.state || !form.city) {
@@ -180,8 +91,6 @@ async function onSubmit() {
     form.state = '';
     form.city = '';
     form.message = '';
-    cities.value = [];
-    await loadStates(form.country);
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo enviar el mensaje. Intenta de nuevo.' });
   } finally {
@@ -226,35 +135,29 @@ async function onSubmit() {
           </label>
           <label>
             País
-            <select v-model="form.country" required :disabled="loadingCountries">
+            <select v-model="form.country" required>
               <option disabled value="">Selecciona un país</option>
-              <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
+              <option v-for="c in COUNTRIES" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
           <label>
             Estado
-            <select
-              v-model="form.state"
-              required
-              :disabled="!canPickState || loadingStates || !states.length"
-            >
-              <option disabled value="">
-                {{ loadingStates ? 'Cargando estados…' : 'Selecciona un estado' }}
-              </option>
+            <select v-if="mappedCountry" v-model="form.state" required>
+              <option disabled value="">Selecciona un estado</option>
               <option v-for="s in states" :key="s" :value="s">{{ s }}</option>
             </select>
+            <input
+              v-else
+              v-model="form.state"
+              type="text"
+              required
+              placeholder="Escribe el estado / provincia"
+            />
           </label>
           <label>
             Ciudad
-            <select
-              v-if="cities.length || loadingCities"
-              v-model="form.city"
-              required
-              :disabled="!canPickCity || loadingCities"
-            >
-              <option disabled value="">
-                {{ loadingCities ? 'Cargando ciudades…' : 'Selecciona una ciudad' }}
-              </option>
+            <select v-if="mappedCountry && cities.length" v-model="form.city" required>
+              <option disabled value="">Selecciona una ciudad</option>
               <option v-for="city in cities" :key="city" :value="city">{{ city }}</option>
             </select>
             <input
@@ -262,7 +165,7 @@ async function onSubmit() {
               v-model="form.city"
               type="text"
               required
-              :disabled="!canPickCity"
+              :disabled="!form.state"
               placeholder="Escribe la ciudad"
             />
           </label>
