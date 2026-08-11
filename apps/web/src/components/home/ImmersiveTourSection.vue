@@ -6,42 +6,47 @@ import { useHomeStore } from '@/stores/homeStore';
 const home = useHomeStore();
 
 const pageSize = ref(3);
-const page = ref(0);
+const startIndex = ref(0);
+const isMobile = ref(false);
 
 const tours = computed(() => home.featuredTours);
 
-const pageCount = computed(() => Math.max(1, Math.ceil(tours.value.length / pageSize.value)));
-
-const visibleTours = computed(() => {
-  const size = pageSize.value;
-  const start = page.value * size;
-  return tours.value.slice(start, start + size);
+const resolvedPageSize = computed(() => {
+  const n = tours.value.length;
+  if (!n) return 1;
+  if (isMobile.value) return 1;
+  // With exactly 3 tours, show 2 so the arrows can move (same UX as projects slider).
+  if (n === 3) return 2;
+  return Math.min(3, n);
 });
 
-const canPrev = computed(() => page.value > 0);
-const canNext = computed(() => page.value < pageCount.value - 1);
+const maxStart = computed(() => Math.max(0, tours.value.length - resolvedPageSize.value));
+
+const visibleTours = computed(() => {
+  const list = tours.value;
+  if (!list.length) return [];
+  const size = resolvedPageSize.value;
+  return list.slice(startIndex.value, startIndex.value + size);
+});
+
+const canPrev = computed(() => startIndex.value > 0);
+const canNext = computed(() => startIndex.value < maxStart.value);
+const showNav = computed(() => tours.value.length > resolvedPageSize.value);
 
 function syncPageSize() {
-  const nextSize = window.matchMedia('(max-width: 800px)').matches ? 1 : 3;
-  if (pageSize.value === nextSize) return;
-  const firstIndex = page.value * pageSize.value;
-  pageSize.value = nextSize;
-  page.value = Math.floor(firstIndex / nextSize);
-}
-
-function clampPage() {
-  const maxPage = Math.max(0, pageCount.value - 1);
-  if (page.value > maxPage) page.value = maxPage;
+  isMobile.value = window.matchMedia('(max-width: 800px)').matches;
+  pageSize.value = resolvedPageSize.value;
+  if (startIndex.value > maxStart.value) startIndex.value = maxStart.value;
 }
 
 function prevPage() {
   if (!canPrev.value) return;
-  page.value -= 1;
+  startIndex.value -= 1;
 }
 
 function nextPage() {
   if (!canNext.value) return;
-  page.value += 1;
+  startIndex.value += 1;
 }
 
 onMounted(() => {
@@ -54,7 +59,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', syncPageSize);
 });
 
-watch(pageCount, clampPage);
+watch([() => tours.value.length, resolvedPageSize], () => {
+  syncPageSize();
+});
 </script>
 
 <template>
@@ -68,7 +75,7 @@ watch(pageCount, clampPage);
           dark
         />
         <div class="immersive__head-actions">
-          <div v-if="pageCount > 1" class="immersive__nav">
+          <div v-if="showNav" class="immersive__nav">
             <button
               type="button"
               class="immersive__arrow"
@@ -103,8 +110,11 @@ watch(pageCount, clampPage);
       <div
         v-else
         class="immersive__grid"
-        :class="{ 'immersive__grid--single': pageSize === 1 }"
-        :key="`${pageSize}-${page}`"
+        :class="{
+          'immersive__grid--single': resolvedPageSize === 1,
+          'immersive__grid--two': resolvedPageSize === 2,
+        }"
+        :key="`${resolvedPageSize}-${startIndex}`"
       >
         <router-link
           v-for="tour in visibleTours"
@@ -195,6 +205,10 @@ watch(pageCount, clampPage);
     gap: 1.5rem;
     animation: immersive-fade 0.28s ease;
 
+    &--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     &--single {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -268,12 +282,6 @@ watch(pageCount, clampPage);
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@media (max-width: 1100px) {
-  .immersive__grid:not(.immersive__grid--single) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
