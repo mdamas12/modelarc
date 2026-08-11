@@ -20,10 +20,11 @@ class WeAreTeamController extends Controller
     public function store(StoreWeAreTeamRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $path = $this->images->store($request->file('image'));
+        $stored = $this->images->store($request->file('image'));
 
         $team = WeAreTeam::query()->create([
-            'path' => $path,
+            'path' => $stored['path'],
+            'display_path' => $stored['display_path'],
             'title' => $data['title'] ?? null,
             'order' => $data['order'] ?? $this->images->nextOrder(),
             'published' => array_key_exists('published', $data) ? (bool) $data['published'] : true,
@@ -39,7 +40,13 @@ class WeAreTeamController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $data['path'] = $this->images->replace($weAreTeam->path, $request->file('image'));
+            $stored = $this->images->replace(
+                $weAreTeam->path,
+                $weAreTeam->display_path,
+                $request->file('image'),
+            );
+            $data['path'] = $stored['path'];
+            $data['display_path'] = $stored['display_path'];
         }
 
         unset($data['image']);
@@ -62,6 +69,7 @@ class WeAreTeamController extends Controller
 
     public function destroy(WeAreTeam $weAreTeam): JsonResponse
     {
+        $this->images->delete($weAreTeam->display_path);
         $this->images->delete($weAreTeam->path);
         $weAreTeam->delete();
 

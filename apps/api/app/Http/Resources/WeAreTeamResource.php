@@ -16,7 +16,9 @@ class WeAreTeamResource extends JsonResource
         return [
             'id' => $this->id,
             'path' => $this->path,
+            'display_path' => $this->display_path,
             'url' => $this->url,
+            'original_url' => $this->original_url,
             'title' => $this->title,
             'order' => $this->order,
             'published' => $this->published,

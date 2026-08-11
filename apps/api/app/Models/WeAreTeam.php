@@ -10,6 +10,7 @@ class WeAreTeam extends Model
 {
     protected $fillable = [
         'path',
+        'display_path',
         'title',
         'order',
         'published',
@@ -35,14 +36,24 @@ class WeAreTeam extends Model
 
     public function getUrlAttribute(): ?string
     {
-        if (! $this->path) {
+        return $this->publicUrl($this->display_path ?: $this->path);
+    }
+
+    public function getOriginalUrlAttribute(): ?string
+    {
+        return $this->publicUrl($this->path);
+    }
+
+    private function publicUrl(?string $path): ?string
+    {
+        if (! $path) {
             return null;
         }
 
-        if (str_starts_with($this->path, 'http://') || str_starts_with($this->path, 'https://')) {
-            return $this->path;
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
         }
 
-        return Storage::disk('public')->url($this->path);
+        return Storage::disk('public')->url($path);
     }
 }

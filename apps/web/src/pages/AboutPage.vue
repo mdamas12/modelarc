@@ -89,10 +89,16 @@ onUnmounted(stopAutoplay)
 
 <template>
   <q-page>
-    <section
-      class="about-hero"
-      :style="{ backgroundImage: `url('${heroImage}')` }"
-    >
+    <section class="about-hero">
+      <img
+        class="about-hero__media"
+        :src="heroImage"
+        alt="Equipo Modelarc"
+        width="2560"
+        height="1440"
+        decoding="async"
+        fetchpriority="high"
+      />
       <div class="about-hero__overlay" />
       <div class="ma-container about-hero__content">
         <p class="ma-eyebrow">Nosotros</p>
@@ -218,17 +224,28 @@ onUnmounted(stopAutoplay)
 .about-hero {
   position: relative;
   min-height: 70vh;
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
   display: flex;
   align-items: flex-end;
   color: var(--ma-cream);
+  overflow: hidden;
+  background: #151515;
+
+  &__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    z-index: 0;
+  }
 
   /* Keep faces clear: light top, dark band only behind the title */
   &__overlay {
     position: absolute;
     inset: 0;
+    z-index: 1;
     background: linear-gradient(
       180deg,
       rgba(17, 17, 17, 0.22) 0%,
@@ -240,7 +257,7 @@ onUnmounted(stopAutoplay)
 
   &__content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     padding-top: 2rem;
     padding-bottom: clamp(2.25rem, 5vh, 3.5rem);
     max-width: 48rem;
