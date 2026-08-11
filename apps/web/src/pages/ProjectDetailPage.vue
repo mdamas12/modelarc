@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import BeforeAfterSlider from '@/components/projects/BeforeAfterSlider.vue';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
@@ -10,8 +10,12 @@ const route = useRoute();
 const store = useProjectStore();
 
 const slug = computed(() => String(route.params.slug || ''));
-
 const tour = computed(() => store.currentTour);
+const gallery = computed(() => store.current?.images ?? []);
+
+const lightboxOpen = ref(false);
+const lightboxIndex = ref(0);
+const activeImage = computed(() => gallery.value[lightboxIndex.value] || null);
 
 const related = computed(() =>
   store.projects
@@ -20,10 +24,42 @@ const related = computed(() =>
 );
 
 async function load() {
+  lightboxOpen.value = false;
+  lightboxIndex.value = 0;
   await store.loadProject(slug.value);
 }
 
-onMounted(load);
+function openLightbox(index: number) {
+  lightboxIndex.value = index;
+  lightboxOpen.value = true;
+}
+
+function prevImage() {
+  if (!gallery.value.length) return;
+  lightboxIndex.value = (lightboxIndex.value - 1 + gallery.value.length) % gallery.value.length;
+}
+
+function nextImage() {
+  if (!gallery.value.length) return;
+  lightboxIndex.value = (lightboxIndex.value + 1) % gallery.value.length;
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (!lightboxOpen.value) return;
+  if (e.key === 'Escape') lightboxOpen.value = false;
+  if (e.key === 'ArrowLeft') prevImage();
+  if (e.key === 'ArrowRight') nextImage();
+}
+
+onMounted(() => {
+  void load();
+  window.addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+});
+
 watch(slug, load);
 </script>
 
@@ -54,31 +90,28 @@ watch(slug, load);
         </div>
       </header>
 
-      <section class="ma-section ma-section--light">
-        <div class="ma-container project-detail__intro">
-          <div>
-            <h2 class="ma-heading" style="font-size: 2rem">Sobre el proyecto</h2>
-            <div class="ma-divider" />
-            <p>{{ store.current.longDescription || store.current.description }}</p>
-          </div>
-          <aside class="project-detail__facts">
-            <div><span>Ubicación</span><strong>{{ store.current.location }}</strong></div>
-            <div><span>Año</span><strong>{{ store.current.year }}</strong></div>
-            <div v-if="store.current.area"><span>Área</span><strong>{{ store.current.area }}</strong></div>
-            <div v-if="store.current.status"><span>Estado</span><strong>{{ store.current.status }}</strong></div>
-          </aside>
+      <section class="project-detail__about ma-section--light">
+        <div class="ma-container">
+          <h2 class="project-detail__about-title">Sobre este proyecto</h2>
+          <div class="ma-divider" />
+          <p class="project-detail__about-text">
+            {{ store.current.longDescription || store.current.description }}
+          </p>
         </div>
       </section>
 
-      <section class="ma-section ma-section--cream">
+      <section v-if="gallery.length" class="project-detail__gallery-section ma-section--cream">
         <div class="ma-container">
-          <h2 class="ma-heading" style="font-size: 2rem; margin-bottom: 1.5rem">Galería</h2>
+          <h2 class="project-detail__section-title">Galería</h2>
           <div class="project-detail__gallery">
-            <div
-              v-for="(img, i) in store.current.images"
+            <button
+              v-for="(img, i) in gallery"
               :key="i"
+              type="button"
               class="project-detail__gallery-item"
               :style="{ backgroundImage: `url(${img})` }"
+              :aria-label="`Ver imagen ${i + 1}`"
+              @click="openLightbox(i)"
             />
           </div>
         </div>
@@ -126,6 +159,45 @@ watch(slug, load);
           </div>
         </div>
       </section>
+
+      <Teleport to="body">
+        <div
+          v-if="lightboxOpen && activeImage"
+          class="project-lightbox"
+          role="dialog"
+          aria-modal="true"
+          @click.self="lightboxOpen = false"
+        >
+          <button
+            type="button"
+            class="project-lightbox__close"
+            aria-label="Cerrar"
+            @click="lightboxOpen = false"
+          >
+            ×
+          </button>
+          <button
+            type="button"
+            class="project-lightbox__nav project-lightbox__nav--prev"
+            aria-label="Anterior"
+            @click="prevImage"
+          >
+            ‹
+          </button>
+          <img :src="activeImage" :alt="store.current.title" class="project-lightbox__img" />
+          <button
+            type="button"
+            class="project-lightbox__nav project-lightbox__nav--next"
+            aria-label="Siguiente"
+            @click="nextImage"
+          >
+            ›
+          </button>
+          <p class="project-lightbox__count">
+            {{ lightboxIndex + 1 }} / {{ gallery.length }}
+          </p>
+        </div>
+      </Teleport>
     </template>
   </q-page>
 </template>
@@ -167,59 +239,58 @@ watch(slug, load);
     margin: 0;
   }
 
-  &__intro {
-    display: grid;
-    grid-template-columns: 1.4fr 0.8fr;
-    gap: 3rem;
-
-    p {
-      color: var(--ma-muted);
-      line-height: 1.8;
-      font-size: 1.05rem;
-    }
+  &__about {
+    padding: 1.15rem 0 0.85rem;
   }
 
-  &__facts {
-    display: grid;
-    gap: 1.25rem;
-    align-content: start;
-    padding: 1.75rem;
-    border-top: 1px solid var(--ma-gold);
+  &__about-title,
+  &__section-title {
+    margin: 0;
+    font-family: var(--ma-font-sans);
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    text-align: left;
+    color: var(--ma-charcoal);
+  }
 
-    div {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
+  &__section-title {
+    margin-bottom: 1rem;
+  }
 
-      span {
-        font-size: 0.68rem;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--ma-gold);
-      }
+  &__about-text {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--ma-muted);
+    line-height: 1.7;
+    font-size: 1rem;
+    text-align: left;
+  }
 
-      strong {
-        font-weight: 500;
-        font-size: 1.05rem;
-      }
-    }
+  &__about .ma-divider {
+    margin: 0.55rem 0 0.75rem;
+  }
+
+  &__gallery-section {
+    padding: 1.35rem 0 2.5rem;
   }
 
   &__gallery {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.55rem;
+    max-width: 920px;
   }
 
   &__gallery-item {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1;
+    border: 0;
+    padding: 0;
     background-size: cover;
     background-position: center;
-
-    &:first-child {
-      grid-column: span 2;
-      aspect-ratio: 21 / 9;
-    }
+    background-color: #1a1a1a;
+    cursor: zoom-in;
   }
 
   &__related {
@@ -235,26 +306,96 @@ watch(slug, load);
   }
 }
 
+.project-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(10, 10, 10, 0.94);
+  display: grid;
+  place-items: center;
+}
+
+.project-lightbox__img {
+  max-width: min(1100px, 92vw);
+  max-height: 82vh;
+  object-fit: contain;
+}
+
+.project-lightbox__close,
+.project-lightbox__nav {
+  position: absolute;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.project-lightbox__close {
+  top: 1rem;
+  right: 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.5rem;
+}
+
+.project-lightbox__nav {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  font-size: 1.8rem;
+  line-height: 1;
+
+  &--prev {
+    left: 1rem;
+  }
+
+  &--next {
+    right: 1rem;
+  }
+}
+
+.project-lightbox__count {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 1100px) {
   .project-detail__related,
   .project-detail__ba-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .project-detail__gallery {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: none;
+  }
 }
 
 @media (max-width: 800px) {
   .project-detail {
-    &__intro,
     &__related,
-    &__gallery,
     &__ba-grid {
       grid-template-columns: 1fr;
     }
 
-    &__gallery-item:first-child {
-      grid-column: auto;
-      aspect-ratio: 16 / 10;
+    &__gallery {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+  }
+
+  .project-lightbox__nav {
+    width: 2.4rem;
+    height: 2.4rem;
   }
 }
 </style>

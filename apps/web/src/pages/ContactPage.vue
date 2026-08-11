@@ -133,15 +133,19 @@ async function onSubmit() {
             <span>Lunes - Viernes, 08:00 AM - 16:30 PM</span>
           </p>
 
-          <div class="contact-aside__social">
-            <a
-              v-for="item in socialLinks"
-              :key="item.label"
-              :href="item.href"
-              :aria-label="item.label"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+          <div class="contact-aside__social-block">
+            <p class="contact-aside__social-title">
+              Contáctanos a través de nuestras redes sociales:
+            </p>
+            <div class="contact-aside__social">
+              <a
+                v-for="item in socialLinks"
+                :key="item.label"
+                :href="item.href"
+                :aria-label="item.label"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
               <svg
                 v-if="item.icon === 'instagram'"
                 viewBox="0 0 24 24"
@@ -190,7 +194,8 @@ async function onSubmit() {
                   d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"
                 />
               </svg>
-            </a>
+              </a>
+            </div>
           </div>
         </aside>
       </div>
@@ -300,11 +305,21 @@ async function onSubmit() {
     font-size: 0.9rem;
   }
 
+  &__social-block {
+    margin-top: 1.35rem;
+  }
+
+  &__social-title {
+    margin: 0 0 0.75rem;
+    color: var(--ma-charcoal);
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
   &__social {
     display: flex;
     flex-wrap: wrap;
     gap: 0.85rem;
-    margin-top: 1.25rem;
 
     a {
       width: 2.1rem;

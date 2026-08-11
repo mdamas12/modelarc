@@ -175,17 +175,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="title || description" class="ba-card__meta">
-      <div class="ba-card__meta-row">
-        <h3 v-if="title" class="ba-card__title">{{ title }}</h3>
-        <button
-          v-if="allowFullscreen"
-          type="button"
-          class="ba-card__expand"
-          @click="openFullscreen"
-        >
-          Pantalla completa
-        </button>
-      </div>
+      <h3 v-if="title" class="ba-card__title">{{ title }}</h3>
       <p v-if="description" class="ba-card__desc">{{ description }}</p>
     </div>
 

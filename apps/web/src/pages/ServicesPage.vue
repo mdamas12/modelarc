@@ -124,10 +124,14 @@ onMounted(async () => {
     font-size: 1.05rem;
     color: #8a7a68 !important;
     line-height: 1.55;
+    text-align: justify;
+    text-justify: inter-word;
   }
 
   &__description {
     margin: 0 0 1.75rem;
+    text-align: justify;
+    text-justify: inter-word;
   }
 
   .ma-divider {
