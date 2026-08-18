@@ -61,7 +61,7 @@ const socialLinks = [
   },
   {
     label: 'Gmail',
-    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=modelarca@gmail.com',
+    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=modelarcca@gmail.com',
     icon: 'gmail',
   },
 ];
@@ -263,7 +263,7 @@ async function onSubmit() {
           </p>
           <p class="contact-aside__row">
             <q-icon name="email" size="20px" aria-hidden="true" />
-            <a href="mailto:modelarca@gmail.com">modelarca@gmail.com</a>
+            <a href="mailto:modelarcca@gmail.com">modelarcca@gmail.com</a>
           </p>
           <p class="contact-aside__row">
             <q-icon name="phone" size="20px" aria-hidden="true" />

@@ -108,7 +108,7 @@ onMounted(async () => {
           </li>
           <li>
             <q-icon name="email" size="18px" aria-hidden="true" />
-            <a href="mailto:ofic.modelarc@gmail.com">ofic.modelarc@gmail.com</a>
+            <a href="mailto:modelarcca@gmail.com">modelarcca@gmail.com</a>
           </li>
           <li>
             <span class="site-footer__wa-icon" aria-hidden="true">
