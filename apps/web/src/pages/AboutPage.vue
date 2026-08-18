@@ -27,6 +27,9 @@ const showVision = computed(() => hasRichText(weAre.value?.vision))
 const showValues = computed(() => hasRichText(weAre.value?.values))
 const showPillars = computed(() => showMission.value || showVision.value || showValues.value)
 const sliderImages = computed(() => teams.value.filter((t) => t.url))
+const heroTitle = computed(() => weAre.value?.titulo_hero?.trim() || '')
+const heroMessage = computed(() => weAre.value?.mensaje_hero?.trim() || '')
+const showHeroCopy = computed(() => Boolean(heroTitle.value || heroMessage.value))
 
 function goTo(index: number) {
   const total = sliderImages.value.length
@@ -100,9 +103,9 @@ onUnmounted(stopAutoplay)
         fetchpriority="high"
       />
       <div class="about-hero__overlay" />
-      <div class="ma-container about-hero__content">
-        <p class="ma-eyebrow">Nosotros</p>
-        <h1 class="ma-heading ma-heading--lg">Arquitectura con propósito</h1>
+      <div v-if="showHeroCopy" class="ma-container about-hero__content">
+        <p v-if="heroMessage" class="ma-eyebrow">{{ heroMessage }}</p>
+        <h1 v-if="heroTitle" class="ma-heading ma-heading--lg">{{ heroTitle }}</h1>
       </div>
     </section>
 

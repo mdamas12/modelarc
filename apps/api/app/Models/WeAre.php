@@ -10,6 +10,8 @@ class WeAre extends Model
 
     protected $fillable = [
         'title',
+        'titulo_hero',
+        'mensaje_hero',
         'description',
         'vision',
         'mission',
@@ -22,6 +24,8 @@ class WeAre extends Model
             ['id' => 1],
             [
                 'title' => 'Quiénes somos',
+                'titulo_hero' => 'Arquitectura con propósito',
+                'mensaje_hero' => 'Nosotros',
                 'description' => null,
                 'vision' => null,
                 'mission' => null,

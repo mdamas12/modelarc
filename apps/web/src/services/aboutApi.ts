@@ -4,6 +4,8 @@ import { extractResource } from '@/services/mappers'
 export interface WeAreContent {
   id: number
   title: string
+  titulo_hero: string | null
+  mensaje_hero: string | null
   description: string | null
   vision: string | null
   mission: string | null
@@ -46,6 +48,8 @@ export async function fetchAbout(): Promise<AboutPayload> {
   const weAre: WeAreContent = {
     id: Number(raw.id ?? 0),
     title: String(raw.title ?? 'Quiénes somos'),
+    titulo_hero: raw.titulo_hero ? String(raw.titulo_hero).trim() || null : null,
+    mensaje_hero: raw.mensaje_hero ? String(raw.mensaje_hero).trim() || null : null,
     description: raw.description ? String(raw.description) : null,
     vision: raw.vision ? String(raw.vision) : null,
     mission: raw.mission ? String(raw.mission) : null,

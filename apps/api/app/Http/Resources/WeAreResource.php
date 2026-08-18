@@ -16,6 +16,8 @@ class WeAreResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'titulo_hero' => $this->titulo_hero,
+            'mensaje_hero' => $this->mensaje_hero,
             'description' => $this->description,
             'vision' => $this->vision,
             'mission' => $this->mission,

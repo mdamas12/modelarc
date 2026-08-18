@@ -28,6 +28,25 @@
           <div class="col-12">
             <q-input v-model="form.title" outlined label="Título *" />
           </div>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="form.titulo_hero"
+              outlined
+              label="Título del hero"
+              hint="Texto grande sobre la imagen de portada. Déjalo vacío para ocultarlo."
+            />
+          </div>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="form.mensaje_hero"
+              outlined
+              type="textarea"
+              autogrow
+              label="Mensaje del hero"
+              hint="Texto pequeño sobre la imagen (ej. Nosotros). Déjalo vacío para ocultarlo."
+              :input-style="{ minHeight: '56px' }"
+            />
+          </div>
           <div class="col-12">
             <div class="editor-field">
               <label class="editor-field__label">Descripción</label>
@@ -199,6 +218,8 @@ const dragOver = ref<number | null>(null)
 
 const form = reactive({
   title: '',
+  titulo_hero: '',
+  mensaje_hero: '',
   description: '',
   vision: '',
   mission: '',
@@ -244,6 +265,8 @@ async function load() {
   try {
     const payload = await adminApi.weAre()
     form.title = payload.we_are.title || ''
+    form.titulo_hero = payload.we_are.titulo_hero || ''
+    form.mensaje_hero = payload.we_are.mensaje_hero || ''
     form.description = payload.we_are.description || ''
     form.vision = toPlainText(payload.we_are.vision)
     form.mission = toPlainText(payload.we_are.mission)
@@ -265,6 +288,8 @@ async function saveInfo() {
   try {
     await adminApi.updateWeAre({
       title: form.title.trim(),
+      titulo_hero: normalizePlain(form.titulo_hero),
+      mensaje_hero: normalizePlain(form.mensaje_hero),
       description: normalizeHtml(form.description),
       vision: normalizePlain(form.vision),
       mission: normalizePlain(form.mission),

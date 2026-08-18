@@ -228,6 +228,8 @@ export interface SiteSetting {
 export interface WeAre {
   id: number
   title: string
+  titulo_hero?: string | null
+  mensaje_hero?: string | null
   description?: string | null
   vision?: string | null
   mission?: string | null

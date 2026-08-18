@@ -18,6 +18,8 @@ class UpdateWeAreRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'titulo_hero' => ['nullable', 'string', 'max:255'],
+            'mensaje_hero' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'vision' => ['nullable', 'string'],
             'mission' => ['nullable', 'string'],
