@@ -14,9 +14,22 @@ Deduplicación Lead: mismo `event_id` (browser `eventID` ↔ CAPI `event_id`).
 
 Categoría **marketing** (ver `docs/architecture/ANALYTICS_PRIVACY_PLAN.md`).
 
-- El Pixel **no** se carga en `<head>` al inicio.
-- Tras aceptar marketing: se carga `fbevents.js`, `fbq('init')`, PageView.
-- Rechazo / marketing off: no script, no eventos browser.
+Defense in depth:
+
+| Canal | Gate |
+|-------|------|
+| Browser Pixel | Solo si `consentStore.marketing === true` |
+| Browser Lead | Solo tras HTTP 201 **y** marketing consent |
+| Server CAPI | Solo si `META_CONVERSIONS_API_ENABLED` **y** `marketing_consent=true` **y** `meta_event_id` válido |
+
+Sin consentimiento marketing:
+
+- El formulario de contacto **sigue funcionando** (Lead CRM normal).
+- **No** se carga Pixel / no PageView / Contact / Lead browser.
+- **No** se envían `meta_event_id`, `_fbp`, `_fbc` al API.
+- **No** se despacha `SendMetaConversionJob` (aunque un cliente manipule el request: el backend exige `marketing_consent=true`).
+
+`marketing_consent` es **transitorio** en el request HTTP. **No** se persiste en la tabla `leads`.
 
 ## ENV
 
@@ -59,11 +72,12 @@ Placements actuales: botón flotante, footer (texto + icono social), página Con
 
 ### Lead
 
-1. Frontend genera UUID `meta_event_id`.
-2. POST `/api/public/contact` incluye `meta_event_id`, `event_source_url`, opcional `meta_fbp` / `meta_fbc`.
-3. Backend crea Lead → responde 201 → encola `SendMetaConversionJob`.
-4. Frontend, **solo si éxito**, `fbq('track', 'Lead', params, { eventID })`.
-5. 422 / 500 / error de red → **no** Lead browser.
+1. Si marketing consent: frontend genera UUID `meta_event_id` y envía `marketing_consent=true` (+ opcional `meta_fbp` / `meta_fbc`).
+2. Si marketing rechazado: POST con `marketing_consent=false` y **sin** campos Meta.
+3. Backend crea Lead → responde 201.
+4. Backend encola CAPI **solo** si CAPI enabled + `marketing_consent=true` + `meta_event_id`.
+5. Frontend, solo si éxito **y** marketing consent: `fbq('track', 'Lead', params, { eventID })`.
+6. 422 / 500 / error de red → **no** Lead browser.
 
 Custom params browser (no PII): `lead_type`, `service`, `budget_range`, `country`.
 
@@ -120,4 +134,4 @@ Rebuild website con `VITE_META_PIXEL_ID` / `VITE_META_PIXEL_ENABLED`. Reiniciar 
 | Duplicados Lead | `event_id` distinto browser/server; nombres `Lead` vs `lead` |
 | Lead OK pero sin Pixel | Usuario rechazó marketing (CAPI igual puede enviarse server-side) |
 
-Nota: CAPI Lead usa datos del formulario legítimamente enviados; el Pixel browser requiere marketing consent. Es un trade-off consciente: la conversión server-side sigue siendo atribución de un lead real.
+Nota: tanto Pixel como CAPI requieren consentimiento **marketing**. Sin él, el Lead CRM se crea igual y no se transmite nada a Meta.

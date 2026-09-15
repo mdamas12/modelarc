@@ -23,6 +23,7 @@ class ContactController extends Controller
     {
         $validated = $request->validated();
 
+        $marketingConsent = $request->boolean('marketing_consent');
         $metaEventId = isset($validated['meta_event_id'])
             ? (string) $validated['meta_event_id']
             : null;
@@ -33,6 +34,7 @@ class ContactController extends Controller
             : null;
 
         unset(
+            $validated['marketing_consent'],
             $validated['meta_event_id'],
             $validated['meta_fbp'],
             $validated['meta_fbc'],
@@ -41,10 +43,13 @@ class ContactController extends Controller
 
         $lead = $this->leads->create($validated);
 
+        // Defense in depth: CAPI only with explicit marketing consent + valid event_id.
+        // marketing_consent is request-scoped and is NOT persisted on leads.
         if (
-            $metaEventId !== null
+            $this->meta->isEnabled()
+            && $marketingConsent === true
+            && $metaEventId !== null
             && $metaEventId !== ''
-            && $this->meta->isEnabled()
         ) {
             try {
                 SendMetaConversionJob::dispatch($lead->id, [

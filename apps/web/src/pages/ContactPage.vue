@@ -173,12 +173,14 @@ async function onSubmit() {
   try {
     const snapshot = { ...form };
     const result = await submitContact(snapshot);
-    trackLead({
-      eventId: result.metaEventId,
-      service: snapshot.service,
-      budgetRange: snapshot.budget_range,
-      country: snapshot.country,
-    });
+    if (result.marketingConsent && result.metaEventId) {
+      trackLead({
+        eventId: result.metaEventId,
+        service: snapshot.service,
+        budgetRange: snapshot.budget_range,
+        country: snapshot.country,
+      });
+    }
     $q.notify({ type: 'positive', message: result.message, color: 'primary', textColor: 'dark' });
     form.name = '';
     form.email = '';

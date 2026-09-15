@@ -31,12 +31,20 @@ class StoreLeadRequest extends FormRequest
             'preferred_contact_method' => ['nullable', 'string', 'max:50'],
             'source' => ['nullable', 'string', 'max:100'],
             'project_id' => ['nullable', 'exists:projects,id'],
-            // Client-generated UUID for Meta Pixel ↔ CAPI deduplication (not persisted).
+            // Transient Meta fields — not persisted on leads.
+            'marketing_consent' => ['required', 'boolean'],
             'meta_event_id' => ['nullable', 'uuid'],
             'meta_fbp' => ['nullable', 'string', 'max:255'],
             'meta_fbc' => ['nullable', 'string', 'max:255'],
             'event_source_url' => ['nullable', 'url', 'max:2048'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->exists('marketing_consent')) {
+            $this->merge(['marketing_consent' => false]);
+        }
     }
 
     /**

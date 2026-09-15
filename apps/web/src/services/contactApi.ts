@@ -1,16 +1,21 @@
 import { api } from '@/boot/axios';
 import type { ContactPayload } from '@/types/models';
-import { createMetaEventId, readMetaBrowserIds } from '@/services/metaPixel';
+import { useConsentStore } from '@/stores/consentStore';
+import { buildContactMetaFields } from '@/tracking/contactMeta';
 
 export interface SubmitContactResult {
   ok: boolean;
   message: string;
   metaEventId: string;
+  marketingConsent: boolean;
 }
 
+export { buildContactMetaFields } from '@/tracking/contactMeta';
+
 export async function submitContact(payload: ContactPayload): Promise<SubmitContactResult> {
-  const metaEventId = createMetaEventId();
-  const browserIds = readMetaBrowserIds();
+  const consent = useConsentStore();
+  const marketingConsent = consent.marketingAllowed === true;
+  const metaFields = buildContactMetaFields(marketingConsent);
 
   await api.post('/public/contact', {
     name: payload.name,
@@ -23,15 +28,13 @@ export async function submitContact(payload: ContactPayload): Promise<SubmitCont
     budget_range: payload.budget_range || null,
     message: payload.message,
     source: 'website',
-    meta_event_id: metaEventId,
-    event_source_url: typeof window !== 'undefined' ? window.location.href : null,
-    meta_fbp: browserIds.fbp || null,
-    meta_fbc: browserIds.fbc || null,
+    ...metaFields,
   });
 
   return {
     ok: true,
     message: 'Mensaje enviado correctamente. Te contactaremos pronto.',
-    metaEventId,
+    metaEventId: metaFields.meta_event_id ?? '',
+    marketingConsent,
   };
 }

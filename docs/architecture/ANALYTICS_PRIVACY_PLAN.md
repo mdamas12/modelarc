@@ -28,7 +28,9 @@
 | Channel | Events | Consent |
 |---------|--------|---------|
 | Browser Pixel | `PageView`, `Contact`, `Lead` | Requires `marketing` |
-| Server CAPI | `Lead` only | Server-side; uses data the user submitted in the contact form |
+| Server CAPI | `Lead` only | Requires **same** `marketing` consent on the contact request (`marketing_consent=true`) |
+
+Without marketing consent the CRM lead is still created; **no** Meta browser or server event is sent. Backend rejects forged Meta fields when `marketing_consent` is false (defense in depth). Consent preference lives in first-party `localStorage`; `marketing_consent` on the API request is transient and not stored on `leads`.
 
 ## Deduplication
 
