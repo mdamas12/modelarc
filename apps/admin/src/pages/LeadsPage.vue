@@ -9,7 +9,7 @@
 
     <div class="admin-card q-pa-md">
       <div class="row q-col-gutter-md q-mb-md items-center">
-        <div class="col-12 col-md-5">
+        <div class="col-12 col-md-4">
           <q-input
             v-model="filters.search"
             outlined
@@ -25,7 +25,7 @@
             </template>
           </q-input>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
           <q-select
             v-model="filters.status"
             outlined
@@ -36,6 +36,62 @@
             label="Estado"
             bg-color="white"
             :options="statusOptions"
+            @update:model-value="reloadFirstPage"
+          />
+        </div>
+        <div class="col-6 col-md-2">
+          <q-select
+            v-model="filters.country"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
+            label="País"
+            bg-color="white"
+            :options="countryOptions"
+            @update:model-value="reloadFirstPage"
+          />
+        </div>
+        <div class="col-6 col-md-2">
+          <q-select
+            v-model="filters.state"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
+            label="Estado / Región"
+            bg-color="white"
+            :options="stateOptions"
+            @update:model-value="reloadFirstPage"
+          />
+        </div>
+        <div class="col-6 col-md-2">
+          <q-select
+            v-model="filters.budget_range"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
+            label="Presupuesto"
+            bg-color="white"
+            :options="budgetOptions"
+            @update:model-value="reloadFirstPage"
+          />
+        </div>
+        <div class="col-12 col-md-4">
+          <q-select
+            v-model="filters.project_type"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
+            label="Servicio / tipo"
+            bg-color="white"
+            :options="projectTypeOptions"
             @update:model-value="reloadFirstPage"
           />
         </div>
@@ -58,22 +114,31 @@
             <div class="lead-card__titles">
               <h3 class="lead-card__name">{{ lead.name }}</h3>
               <p class="lead-card__slug">{{ lead.email }}</p>
+              <p class="lead-card__geo">{{ locationLabel(lead) }}</p>
             </div>
           </div>
 
           <div class="lead-card__field">
-            <span class="lead-card__label">Teléfono</span>
+            <span class="lead-card__label">TelÃ©fono</span>
             <div class="lead-card__value">
               <q-icon name="phone" size="16px" />
-              <span>{{ lead.phone || '—' }}</span>
+              <span>{{ lead.phone || 'â€”' }}</span>
             </div>
           </div>
 
           <div class="lead-card__field">
-            <span class="lead-card__label">Tipo</span>
+            <span class="lead-card__label">Servicio</span>
             <div class="lead-card__value">
               <q-icon name="category" size="16px" />
-              <span class="ellipsis">{{ lead.project_type || '—' }}</span>
+              <span class="ellipsis">{{ lead.project_type || 'â€”' }}</span>
+            </div>
+          </div>
+
+          <div class="lead-card__field">
+            <span class="lead-card__label">Presupuesto</span>
+            <div class="lead-card__value">
+              <q-icon name="payments" size="16px" />
+              <span>{{ budgetLabel(lead) }}</span>
             </div>
           </div>
 
@@ -175,18 +240,34 @@
         <section class="lead-detail__body">
           <div class="lead-detail__meta">
             <div class="lead-detail__meta-item">
-              <span class="lead-detail__meta-label">Tipo</span>
+              <span class="lead-detail__meta-label">País</span>
+              <span class="lead-detail__meta-value">{{ selected.country || 'â€”' }}</span>
+            </div>
+            <div class="lead-detail__meta-item">
+              <span class="lead-detail__meta-label">Estado / Región</span>
+              <span class="lead-detail__meta-value">{{ selected.state || 'â€”' }}</span>
+            </div>
+            <div class="lead-detail__meta-item">
+              <span class="lead-detail__meta-label">Ciudad</span>
+              <span class="lead-detail__meta-value">{{ selected.city || 'â€”' }}</span>
+            </div>
+            <div class="lead-detail__meta-item">
+              <span class="lead-detail__meta-label">Servicio</span>
               <span class="lead-detail__meta-value">
                 <q-icon name="category" size="16px" />
-                {{ selected.project_type || '—' }}
+                {{ selected.project_type || 'â€”' }}
               </span>
             </div>
             <div class="lead-detail__meta-item">
               <span class="lead-detail__meta-label">Presupuesto</span>
               <span class="lead-detail__meta-value">
                 <q-icon name="payments" size="16px" />
-                {{ selected.budget_range || '—' }}
+                {{ budgetLabel(selected) }}
               </span>
+            </div>
+            <div class="lead-detail__meta-item">
+              <span class="lead-detail__meta-label">Origen</span>
+              <span class="lead-detail__meta-value">{{ selected.source || 'â€”' }}</span>
             </div>
             <div class="lead-detail__meta-item">
               <span class="lead-detail__meta-label">Estado</span>
@@ -235,6 +316,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { BUDGET_RANGE_OPTIONS, budgetRangeLabel } from '@/constants/budgetRanges'
 import { adminApi } from '@/services/adminApi'
 import type { Lead } from '@/types'
 
@@ -247,6 +329,16 @@ const selected = ref<Lead | null>(null)
 const filters = reactive({
   search: '',
   status: null as string | null,
+  country: null as string | null,
+  state: null as string | null,
+  budget_range: null as string | null,
+  project_type: null as string | null,
+})
+
+const filterMeta = reactive({
+  countries: [] as string[],
+  states: [] as string[],
+  project_types: [] as string[],
 })
 
 const pagination = ref({ page: 1, rowsPerPage: 20, rowsNumber: 0 })
@@ -257,14 +349,23 @@ const statusOptions = [
   { label: 'Cerrado', value: 'closed' },
 ]
 
+const budgetOptions = BUDGET_RANGE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))
+const countryOptions = computed(() =>
+  filterMeta.countries.map((value) => ({ label: value, value })),
+)
+const stateOptions = computed(() => filterMeta.states.map((value) => ({ label: value, value })))
+const projectTypeOptions = computed(() =>
+  filterMeta.project_types.map((value) => ({ label: value, value })),
+)
+
 const pageCount = computed(() =>
   Math.max(1, Math.ceil(pagination.value.rowsNumber / pagination.value.rowsPerPage)),
 )
 
 function formatDate(value?: string | null) {
-  if (!value) return '—'
+  if (!value) return 'â€”'
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
+  if (Number.isNaN(d.getTime())) return 'â€”'
   const dd = String(d.getDate()).padStart(2, '0')
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const yyyy = d.getFullYear()
@@ -272,12 +373,32 @@ function formatDate(value?: string | null) {
 }
 
 function labelStatus(value?: string | null) {
-  return statusOptions.find((o) => o.value === value)?.label || value || '—'
+  return statusOptions.find((o) => o.value === value)?.label || value || 'â€”'
+}
+
+function locationLabel(lead: Lead) {
+  const parts = [lead.city, lead.state, lead.country].filter(Boolean)
+  return parts.length ? parts.join(', ') : 'â€”'
+}
+
+function budgetLabel(lead: Lead) {
+  return lead.budget_range_label || budgetRangeLabel(lead.budget_range)
 }
 
 function reloadFirstPage() {
   pagination.value.page = 1
   void load()
+}
+
+async function loadFilterOptions() {
+  try {
+    const res = await adminApi.leadFilterOptions()
+    filterMeta.countries = res.data.countries || []
+    filterMeta.states = res.data.states || []
+    filterMeta.project_types = res.data.project_types || []
+  } catch {
+    // Filters remain usable with empty option lists.
+  }
 }
 
 async function load() {
@@ -286,6 +407,10 @@ async function load() {
     const res = await adminApi.leads({
       search: filters.search || undefined,
       status: filters.status || undefined,
+      country: filters.country || undefined,
+      state: filters.state || undefined,
+      budget_range: filters.budget_range || undefined,
+      project_type: filters.project_type || undefined,
       page: pagination.value.page,
       per_page: pagination.value.rowsPerPage,
     })
@@ -314,17 +439,21 @@ function showLead(lead: Lead) {
 }
 
 async function remove(id: number) {
-  $q.dialog({ title: 'Eliminar', message: '¿Eliminar esta solicitud?', cancel: true }).onOk(async () => {
+  $q.dialog({ title: 'Eliminar', message: 'Â¿Eliminar esta solicitud?', cancel: true }).onOk(async () => {
     try {
       await adminApi.deleteLead(id)
+      $q.notify({ type: 'positive', message: 'Solicitud eliminada' })
       await load()
+      await loadFilterOptions()
     } catch {
-      $q.notify({ type: 'negative', message: 'Error al eliminar' })
+      $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
     }
   })
 }
 
-onMounted(load)
+onMounted(async () => {
+  await Promise.all([loadFilterOptions(), load()])
+})
 </script>
 
 <style scoped lang="scss">
@@ -337,14 +466,15 @@ onMounted(load)
 .lead-card {
   display: grid;
   grid-template-columns:
-    minmax(180px, 1.3fr)
+    minmax(160px, 1.4fr)
+    minmax(100px, 0.7fr)
+    minmax(110px, 0.8fr)
+    minmax(100px, 0.7fr)
+    minmax(95px, 0.65fr)
     minmax(120px, 0.8fr)
-    minmax(120px, 0.9fr)
-    minmax(110px, 0.7fr)
-    minmax(140px, 0.9fr)
     auto;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   padding: 0.9rem 1rem;
   background: #fff;
   border: 1px solid var(--ma-border);
@@ -385,6 +515,15 @@ onMounted(load)
   margin: 0.15rem 0 0;
   font-size: 0.75rem;
   color: #777;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lead-card__geo {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  color: #999;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

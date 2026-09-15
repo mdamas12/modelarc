@@ -71,7 +71,14 @@ class HomeController extends Controller
             ->get();
 
         $settings = SiteSetting::query()
-            ->whereIn('key', ['site_name', 'site_tagline', 'contact_email', 'contact_phone'])
+            ->whereIn('key', [
+                'site_name',
+                'site_tagline',
+                'contact_email',
+                'contact_phone',
+                'whatsapp_phone',
+                'whatsapp_message',
+            ])
             ->pluck('value', 'key');
 
         return response()->json([
@@ -83,6 +90,10 @@ class HomeController extends Controller
                 'services' => ServiceResource::collection($services),
                 'testimonials' => TestimonialResource::collection($testimonials),
                 'settings' => $settings,
+                'budget_ranges' => collect(config('leads.budget_ranges', []))
+                    ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+                    ->values()
+                    ->all(),
             ],
         ]);
     }

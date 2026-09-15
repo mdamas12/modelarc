@@ -123,8 +123,9 @@ return [
     */
 
     'to' => [
-        // Uno o varios, separados por coma: info@...,otro@...
-        'address' => env('MAIL_TO_ADDRESS', 'info@modelarcve.com'),
+        // Destinatario(s) comercial(es). Preferir uno solo: modelarcca@gmail.com
+        // Varios separados por coma solo si se necesita copia explícita.
+        'address' => env('MAIL_TO_ADDRESS', 'modelarcca@gmail.com'),
     ],
 
 ];

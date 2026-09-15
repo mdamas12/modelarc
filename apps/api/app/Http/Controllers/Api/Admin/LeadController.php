@@ -17,9 +17,23 @@ class LeadController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $paginator = $this->leads->list($request->only(['status', 'search']), (int) $request->integer('per_page', 20));
+        $paginator = $this->leads->list(
+            $request->only(['status', 'search', 'country', 'state', 'budget_range', 'project_type']),
+            (int) $request->integer('per_page', 20),
+        );
 
         return LeadResource::collection($paginator);
+    }
+
+    public function filterOptions(): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->leads->filterOptions(),
+            'budget_ranges' => collect(config('leads.budget_ranges', []))
+                ->map(fn (string $label, string $value) => ['value' => $value, 'label' => $label])
+                ->values()
+                ->all(),
+        ]);
     }
 
     public function show(Lead $lead): LeadResource

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\BudgetRange;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,6 +25,7 @@ class LeadResource extends JsonResource
             'project_type' => $this->project_type,
             'message' => $this->message,
             'budget_range' => $this->budget_range,
+            'budget_range_label' => BudgetRange::label($this->budget_range),
             'preferred_contact_method' => $this->preferred_contact_method,
             'status' => $this->status,
             'source' => $this->source,

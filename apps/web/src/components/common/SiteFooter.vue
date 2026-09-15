@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { fetchFooterGallery, type GalleryImage } from '@/services/galleryApi';
+import { useHomeStore } from '@/stores/homeStore';
+import { buildWhatsAppUrl, formatWhatsAppDisplay } from '@/utils/whatsapp';
 
 const year = new Date().getFullYear();
+const home = useHomeStore();
 
 const links = [
   { label: 'Inicio', to: '/' },
@@ -20,23 +23,36 @@ const services = [
   'Recorridos virtuales',
 ];
 
-const socialLinks = [
-  {
-    label: 'Instagram',
-    href: 'https://www.instagram.com/modelarc_/',
-    icon: 'instagram',
-  },
-  {
-    label: 'Facebook',
-    href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
-    icon: 'facebook',
-  },
-  {
-    label: 'WhatsApp',
-    href: 'https://wa.me/584249171058',
-    icon: 'whatsapp',
-  },
-];
+const whatsappUrl = computed(() =>
+  buildWhatsAppUrl(home.settings.whatsapp_phone, home.settings.whatsapp_message),
+);
+const whatsappDisplay = computed(() => formatWhatsAppDisplay(home.settings.whatsapp_phone));
+const contactEmail = computed(
+  () => home.settings.contact_email?.trim() || 'modelarcca@gmail.com',
+);
+
+const socialLinks = computed(() => {
+  const items = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/modelarc_/',
+      icon: 'instagram',
+    },
+    {
+      label: 'Facebook',
+      href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
+      icon: 'facebook',
+    },
+  ];
+  if (whatsappUrl.value) {
+    items.push({
+      label: 'WhatsApp',
+      href: whatsappUrl.value,
+      icon: 'whatsapp',
+    });
+  }
+  return items;
+});
 
 const galleryImages = ref<GalleryImage[]>([]);
 const lightboxOpen = ref(false);
@@ -62,6 +78,7 @@ function nextImage() {
 }
 
 onMounted(async () => {
+  if (!home.loaded) void home.loadHome();
   try {
     galleryImages.value = await fetchFooterGallery(6);
   } catch {
@@ -108,9 +125,9 @@ onMounted(async () => {
           </li>
           <li>
             <q-icon name="email" size="18px" aria-hidden="true" />
-            <a href="mailto:modelarcca@gmail.com">modelarcca@gmail.com</a>
+            <a :href="`mailto:${contactEmail}`">{{ contactEmail }}</a>
           </li>
-          <li>
+          <li v-if="whatsappUrl && whatsappDisplay">
             <span class="site-footer__wa-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                 <path
@@ -118,8 +135,8 @@ onMounted(async () => {
                 />
               </svg>
             </span>
-            <a href="https://wa.me/584249171058" target="_blank" rel="noopener noreferrer">
-              (+58)-4249171058
+            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer">
+              {{ whatsappDisplay }}
             </a>
           </li>
         </ul>

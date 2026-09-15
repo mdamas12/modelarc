@@ -69,6 +69,7 @@ export interface ContactPayload {
   state?: string;
   city?: string;
   service?: string;
+  budget_range?: string;
   message: string;
 }
 

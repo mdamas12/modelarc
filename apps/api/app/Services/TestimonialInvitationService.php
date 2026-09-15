@@ -113,7 +113,7 @@ class TestimonialInvitationService
         string $subject,
         string $html,
     ): void {
-        $fromAddress = (string) config('mail.from.address', 'info@modelarcve.com');
+        $fromAddress = (string) config('mail.from.address');
         $fromName = (string) config('mail.from.name', 'Modelarc');
 
         $response = Http::withToken($apiKey)

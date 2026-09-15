@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import type { ICity, ICountry, IState } from 'country-state-city';
 import SectionHeader from '@/components/common/SectionHeader.vue';
+import { BUDGET_RANGE_OPTIONS } from '@/constants/budgetRanges';
 import {
   defaultCountryName,
   ensureLocationData,
@@ -12,9 +13,12 @@ import {
   getStatesOfCountry,
 } from '@/data/locations';
 import { submitContact } from '@/services/contactApi';
+import { useHomeStore } from '@/stores/homeStore';
 import type { ContactPayload } from '@/types/models';
+import { buildWhatsAppUrl, formatWhatsAppDisplay } from '@/utils/whatsapp';
 
 const $q = useQuasar();
+const home = useHomeStore();
 const sending = ref(false);
 const locationsReady = ref(false);
 
@@ -32,6 +36,7 @@ const form = reactive<ContactPayload>({
   state: '',
   city: '',
   service: 'Diseño arquitectónico',
+  budget_range: '',
   message: '',
 });
 
@@ -43,28 +48,45 @@ const services = [
   'Otro',
 ];
 
-const socialLinks = [
-  {
-    label: 'Instagram',
-    href: 'https://www.instagram.com/modelarc_/',
-    icon: 'instagram',
-  },
-  {
-    label: 'Facebook',
-    href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
-    icon: 'facebook',
-  },
-  {
-    label: 'WhatsApp',
-    href: 'https://wa.me/584249171058',
-    icon: 'whatsapp',
-  },
-  {
+const budgetOptions = computed(() =>
+  home.budgetRanges.length ? home.budgetRanges : [...BUDGET_RANGE_OPTIONS],
+);
+
+const whatsappUrl = computed(() =>
+  buildWhatsAppUrl(home.settings.whatsapp_phone, home.settings.whatsapp_message),
+);
+const whatsappDisplay = computed(() => formatWhatsAppDisplay(home.settings.whatsapp_phone));
+const contactEmail = computed(
+  () => home.settings.contact_email?.trim() || 'modelarcca@gmail.com',
+);
+
+const socialLinks = computed(() => {
+  const items = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/modelarc_/',
+      icon: 'instagram',
+    },
+    {
+      label: 'Facebook',
+      href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
+      icon: 'facebook',
+    },
+  ];
+  if (whatsappUrl.value) {
+    items.push({
+      label: 'WhatsApp',
+      href: whatsappUrl.value,
+      icon: 'whatsapp',
+    });
+  }
+  items.push({
     label: 'Gmail',
-    href: 'https://mail.google.com/mail/?view=cm&fs=1&to=modelarcca@gmail.com',
+    href: `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(contactEmail.value)}`,
     icon: 'gmail',
-  },
-];
+  });
+  return items;
+});
 
 const hasStates = computed(() => states.value.length > 0);
 const hasCities = computed(() => cities.value.length > 0);
@@ -116,6 +138,7 @@ watch(
 );
 
 onMounted(async () => {
+  if (!home.loaded) void home.loadHome();
   try {
     await ensureLocationData();
     countries.value = getAllCountries();
@@ -130,8 +153,19 @@ onMounted(async () => {
 });
 
 async function onSubmit() {
-  if (!form.name || !form.email || !form.message || !form.country || !form.state || !form.city) {
-    $q.notify({ type: 'warning', message: 'Completa nombre, email, ubicación y mensaje.' });
+  if (
+    !form.name ||
+    !form.email ||
+    !form.message ||
+    !form.country ||
+    !form.state ||
+    !form.city ||
+    !form.budget_range
+  ) {
+    $q.notify({
+      type: 'warning',
+      message: 'Completa nombre, email, ubicación, presupuesto y mensaje.',
+    });
     return;
   }
   sending.value = true;
@@ -141,6 +175,7 @@ async function onSubmit() {
     form.name = '';
     form.email = '';
     form.phone = '';
+    form.budget_range = '';
     form.message = '';
     if (locationsReady.value) {
       resetLocationToDefault();
@@ -246,6 +281,15 @@ async function onSubmit() {
               placeholder="Escribe la ciudad"
             />
           </label>
+          <label>
+            Rango de presupuesto
+            <select v-model="form.budget_range" required>
+              <option disabled value="">Selecciona un rango</option>
+              <option v-for="opt in budgetOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </label>
           <label class="contact-form__full">
             Mensaje
             <textarea v-model="form.message" rows="5" required />
@@ -263,12 +307,12 @@ async function onSubmit() {
           </p>
           <p class="contact-aside__row">
             <q-icon name="email" size="20px" aria-hidden="true" />
-            <a href="mailto:modelarcca@gmail.com">modelarcca@gmail.com</a>
+            <a :href="`mailto:${contactEmail}`">{{ contactEmail }}</a>
           </p>
-          <p class="contact-aside__row">
+          <p v-if="whatsappUrl && whatsappDisplay" class="contact-aside__row">
             <q-icon name="phone" size="20px" aria-hidden="true" />
-            <a href="https://wa.me/584249171058" target="_blank" rel="noopener noreferrer">
-              (+58)-4249171058
+            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer">
+              {{ whatsappDisplay }}
             </a>
           </p>
           <div class="ma-divider" />

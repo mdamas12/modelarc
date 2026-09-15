@@ -3,7 +3,10 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Configuración</h1>
-        <p class="page-subtitle">Ajustes del sitio (clave / valor)</p>
+        <p class="page-subtitle">
+          Ajustes del sitio (clave / valor). WhatsApp público: <code>whatsapp_phone</code>,
+          <code>whatsapp_message</code>.
+        </p>
       </div>
       <q-btn color="primary" unelevated no-caps icon="add" label="Nueva clave" @click="openCreate" />
     </div>
@@ -125,6 +128,7 @@ function formatDate(value?: string | null) {
 }
 
 function iconForKey(key: string) {
+  if (key.includes('whatsapp')) return 'chat'
   if (key.includes('email')) return 'email'
   if (key.includes('phone')) return 'phone'
   if (key.includes('name')) return 'badge'

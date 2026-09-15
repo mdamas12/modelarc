@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\ContactLeadMail;
 use App\Models\Lead;
+use App\Support\CommercialMail;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -13,7 +14,7 @@ class ContactMailNotifier
 {
     public function send(Lead $lead): void
     {
-        $recipients = $this->recipients();
+        $recipients = CommercialMail::recipients();
 
         if ($recipients === []) {
             return;
@@ -48,28 +49,11 @@ class ContactMailNotifier
     }
 
     /**
-     * @return list<string>
-     */
-    protected function recipients(): array
-    {
-        $raw = (string) config('mail.to.address', 'info@modelarcve.com');
-        $emails = array_map(
-            static fn (string $email): string => strtolower(trim($email)),
-            explode(',', $raw),
-        );
-
-        return array_values(array_unique(array_filter(
-            $emails,
-            static fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL),
-        )));
-    }
-
-    /**
      * @param  list<string>  $recipients
      */
     protected function sendViaResend(string $apiKey, array $recipients, Lead $lead, string $subject, string $html): void
     {
-        $fromAddress = (string) config('mail.from.address', 'info@modelarcve.com');
+        $fromAddress = (string) config('mail.from.address', CommercialMail::DEFAULT_TO);
         $fromName = (string) config('mail.from.name', 'Modelarc');
 
         $response = Http::withToken($apiKey)

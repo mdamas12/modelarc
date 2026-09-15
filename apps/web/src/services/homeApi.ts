@@ -21,12 +21,18 @@ export interface HeroGalleryImage {
   published: boolean;
 }
 
+export interface BudgetRangeOption {
+  value: string;
+  label: string;
+}
+
 export interface HomePayload {
   featuredProjects: Project[];
   featuredTours: VirtualTour[];
   services: ServiceItem[];
   testimonials: Testimonial[];
   settings: Record<string, string>;
+  budgetRanges: BudgetRangeOption[];
   hero: HeroContent;
   heroGalleries: HeroGalleryImage[];
 }
@@ -87,12 +93,22 @@ export async function fetchHome(): Promise<HomePayload> {
         .sort((a, b) => a.order - b.order)
     : [];
 
+  const budgetRanges = Array.isArray(payload.budget_ranges)
+    ? (payload.budget_ranges as Array<Record<string, unknown>>)
+        .map((item) => ({
+          value: String(item.value ?? ''),
+          label: String(item.label ?? item.value ?? ''),
+        }))
+        .filter((item) => item.value)
+    : [];
+
   return {
     featuredProjects,
     featuredTours,
     services,
     testimonials,
     settings,
+    budgetRanges,
     hero,
     heroGalleries,
   };

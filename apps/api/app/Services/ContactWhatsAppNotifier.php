@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lead;
+use App\Support\BudgetRange;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -64,12 +65,18 @@ class ContactWhatsAppNotifier
             $messageBody = mb_substr($messageBody, 0, 797).'...';
         }
 
+        $location = collect([$lead->city, $lead->state, $lead->country])
+            ->filter(fn ($part) => filled($part))
+            ->implode(', ');
+
         $lines = [
             '*Web Solicitud*',
             'Nombre: '.(trim((string) $lead->name) ?: '—'),
             'Email: '.(trim((string) $lead->email) ?: '—'),
             'Teléfono: '.(trim((string) $lead->phone) ?: '—'),
+            'Ubicación: '.($location !== '' ? $location : '—'),
             'Servicio: '.(trim((string) $lead->project_type) ?: '—'),
+            'Presupuesto: '.(BudgetRange::label($lead->budget_range) ?: '—'),
             'Mensaje: '.($messageBody !== '' ? $messageBody : '—'),
         ];
 

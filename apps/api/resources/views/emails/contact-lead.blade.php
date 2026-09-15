@@ -74,6 +74,15 @@
                                                 </td>
                                             </tr>
                                             @endif
+                                            @php($budgetLabel = \App\Support\BudgetRange::label($lead->budget_range))
+                                            @if ($budgetLabel)
+                                            <tr>
+                                                <td style="padding:0 0 14px;">
+                                                    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,244,240,0.45);">Presupuesto</p>
+                                                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:#f7f4f0;">{{ $budgetLabel }}</p>
+                                                </td>
+                                            </tr>
+                                            @endif
                                             <tr>
                                                 <td style="padding:0;">
                                                     <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,244,240,0.45);">Recibido</p>

@@ -206,9 +206,13 @@ export interface Lead {
   name: string
   email: string
   phone?: string | null
+  country?: string | null
+  state?: string | null
+  city?: string | null
   project_type?: string | null
   message?: string | null
   budget_range?: string | null
+  budget_range_label?: string | null
   preferred_contact_method?: string | null
   status: string
   source?: string | null
@@ -293,14 +297,9 @@ export interface DashboardData {
   projects_by_publication: Record<string, number>
   recent_leads: Lead[]
   recent_projects: Project[]
-  // Extended mock fields for richer UI
-  visits_total?: number
-  storage_used_gb?: number
-  storage_total_gb?: number
-  storage_breakdown?: { label: string; value: number }[]
   activity?: { id: number; title: string; description: string; time: string }[]
-  chart_visits?: { labels: string[]; data: number[] }
   top_projects?: { name: string; views: number }[]
+  analytics_pending?: boolean
 }
 
 export interface Paginated<T> {

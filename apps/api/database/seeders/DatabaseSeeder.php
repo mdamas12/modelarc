@@ -377,7 +377,7 @@ class DatabaseSeeder extends Seeder
                 'phone' => '+56 9 1234 5678',
                 'project_type' => 'residencial',
                 'message' => 'Quisiera cotizar el diseño de una casa de 250 m².',
-                'budget_range' => '100-200M CLP',
+                'budget_range' => 'medium',
                 'preferred_contact_method' => 'whatsapp',
                 'status' => 'new',
                 'source' => 'website',
@@ -388,8 +388,10 @@ class DatabaseSeeder extends Seeder
         $settings = [
             'site_name' => ['value' => 'Modelarc'],
             'site_tagline' => ['value' => 'Arquitectura, construcción y experiencias 360°'],
-            'contact_email' => ['value' => 'hola@modelarc.com'],
-            'contact_phone' => ['value' => '+56 2 2345 6789'],
+            'contact_email' => ['value' => 'modelarcca@gmail.com'],
+            'contact_phone' => ['value' => '+58 424 9171058'],
+            'whatsapp_phone' => ['value' => '584249171058'],
+            'whatsapp_message' => ['value' => 'Hola Modelarc, me interesa solicitar información sobre un proyecto.'],
         ];
 
         foreach ($settings as $key => $payload) {

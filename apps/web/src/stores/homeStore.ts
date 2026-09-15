@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { fetchHome, type HeroContent, type HeroGalleryImage, type HomePayload } from '@/services/homeApi';
+import {
+  fetchHome,
+  type BudgetRangeOption,
+  type HeroContent,
+  type HeroGalleryImage,
+  type HomePayload,
+} from '@/services/homeApi';
 import type { Project, ServiceItem, Testimonial, VirtualTour } from '@/types/models';
 
 const EMPTY_HERO: HeroContent = { text1: '', text2: '', text3: '' };
@@ -11,6 +17,7 @@ export const useHomeStore = defineStore('home', () => {
   const services = ref<ServiceItem[]>([]);
   const testimonials = ref<Testimonial[]>([]);
   const settings = ref<Record<string, string>>({});
+  const budgetRanges = ref<BudgetRangeOption[]>([]);
   const hero = ref<HeroContent>({ ...EMPTY_HERO });
   const heroGalleries = ref<HeroGalleryImage[]>([]);
   const loading = ref(false);
@@ -28,6 +35,7 @@ export const useHomeStore = defineStore('home', () => {
       services.value = payload.services;
       testimonials.value = payload.testimonials;
       settings.value = payload.settings;
+      budgetRanges.value = payload.budgetRanges;
       hero.value = payload.hero;
       heroGalleries.value = payload.heroGalleries;
       loaded.value = true;
@@ -37,6 +45,7 @@ export const useHomeStore = defineStore('home', () => {
       featuredTours.value = [];
       services.value = [];
       testimonials.value = [];
+      budgetRanges.value = [];
       hero.value = { ...EMPTY_HERO };
       heroGalleries.value = [];
     } finally {
@@ -50,6 +59,7 @@ export const useHomeStore = defineStore('home', () => {
     services,
     testimonials,
     settings,
+    budgetRanges,
     hero,
     heroGalleries,
     loading,

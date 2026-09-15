@@ -10,6 +10,7 @@ export async function submitContact(payload: ContactPayload): Promise<{ ok: bool
     state: payload.state || null,
     city: payload.city || null,
     project_type: payload.service || null,
+    budget_range: payload.budget_range || null,
     message: payload.message,
     source: 'website',
   });

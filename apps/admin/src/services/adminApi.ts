@@ -208,6 +208,14 @@ export const adminApi = {
     return data
   },
 
+  async leadFilterOptions() {
+    const { data } = await api.get('/admin/leads/filter-options')
+    return data as {
+      data: { countries: string[]; states: string[]; project_types: string[] }
+      budget_ranges: { value: string; label: string }[]
+    }
+  },
+
   async updateLead(id: number | string, payload: Record<string, unknown>) {
     const { data } = await api.put(`/admin/leads/${id}`, payload)
     return unwrapData<Lead>(data)

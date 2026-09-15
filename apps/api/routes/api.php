@@ -107,6 +107,7 @@ Route::prefix('admin')->group(function () {
         Route::put('hotspots/{hotspot}', [HotspotController::class, 'update']);
         Route::delete('hotspots/{hotspot}', [HotspotController::class, 'destroy']);
 
+        Route::get('leads/filter-options', [LeadController::class, 'filterOptions']);
         Route::apiResource('leads', LeadController::class)->only(['index', 'show', 'update', 'destroy']);
         Route::apiResource('services', AdminServiceController::class);
 

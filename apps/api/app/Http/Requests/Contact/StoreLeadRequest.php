@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Contact;
 
+use App\Support\BudgetRange;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreLeadRequest extends FormRequest
 {
@@ -25,10 +27,21 @@ class StoreLeadRequest extends FormRequest
             'city' => ['required', 'string', 'max:100'],
             'project_type' => ['nullable', 'string', 'max:100'],
             'message' => ['nullable', 'string'],
-            'budget_range' => ['nullable', 'string', 'max:100'],
+            'budget_range' => ['required', 'string', Rule::in(BudgetRange::values())],
             'preferred_contact_method' => ['nullable', 'string', 'max:50'],
             'source' => ['nullable', 'string', 'max:100'],
             'project_id' => ['nullable', 'exists:projects,id'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'budget_range.required' => 'Selecciona un rango de presupuesto.',
+            'budget_range.in' => 'El rango de presupuesto no es válido.',
         ];
     }
 }

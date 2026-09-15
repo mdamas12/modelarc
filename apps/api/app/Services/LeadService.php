@@ -59,6 +59,10 @@ class LeadService
         return Lead::query()
             ->with('project:id,title,slug')
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['country'] ?? null, fn ($q, $country) => $q->where('country', $country))
+            ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
+            ->when($filters['budget_range'] ?? null, fn ($q, $budget) => $q->where('budget_range', $budget))
+            ->when($filters['project_type'] ?? null, fn ($q, $type) => $q->where('project_type', $type))
             ->when($filters['search'] ?? null, function ($q, string $search) {
                 $q->where(function ($inner) use ($search) {
                     $inner->where('name', 'like', "%{$search}%")
@@ -80,5 +84,40 @@ class LeadService
     public function delete(Lead $lead): void
     {
         $lead->delete();
+    }
+
+    /**
+     * Distinct values for admin filter dropdowns.
+     *
+     * @return array{countries: list<string>, states: list<string>, project_types: list<string>}
+     */
+    public function filterOptions(): array
+    {
+        return [
+            'countries' => Lead::query()
+                ->whereNotNull('country')
+                ->where('country', '!=', '')
+                ->distinct()
+                ->orderBy('country')
+                ->pluck('country')
+                ->values()
+                ->all(),
+            'states' => Lead::query()
+                ->whereNotNull('state')
+                ->where('state', '!=', '')
+                ->distinct()
+                ->orderBy('state')
+                ->pluck('state')
+                ->values()
+                ->all(),
+            'project_types' => Lead::query()
+                ->whereNotNull('project_type')
+                ->where('project_type', '!=', '')
+                ->distinct()
+                ->orderBy('project_type')
+                ->pluck('project_type')
+                ->values()
+                ->all(),
+        ];
     }
 }

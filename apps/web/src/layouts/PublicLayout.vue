@@ -1,24 +1,44 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue';
 import SiteFooter from '@/components/common/SiteFooter.vue';
 import SiteHeader from '@/components/common/SiteHeader.vue';
+import { useHomeStore } from '@/stores/homeStore';
+import { buildWhatsAppUrl } from '@/utils/whatsapp';
 
-const floatingSocial = [
-  {
-    label: 'Instagram',
-    href: 'https://www.instagram.com/modelarc_/',
-    icon: 'instagram',
-  },
-  {
-    label: 'Facebook',
-    href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
-    icon: 'facebook',
-  },
-  {
-    label: 'WhatsApp',
-    href: 'https://wa.me/584249171058',
-    icon: 'whatsapp',
-  },
-];
+const home = useHomeStore();
+
+onMounted(() => {
+  if (!home.loaded) void home.loadHome();
+});
+
+const whatsappUrl = computed(() =>
+  buildWhatsAppUrl(home.settings.whatsapp_phone, home.settings.whatsapp_message),
+);
+
+const floatingSocial = computed(() => {
+  const items = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/modelarc_/',
+      icon: 'instagram',
+    },
+    {
+      label: 'Facebook',
+      href: 'https://www.facebook.com/share/1H3KpGgge4/?mibextid=wwXIfr',
+      icon: 'facebook',
+    },
+  ];
+
+  if (whatsappUrl.value) {
+    items.push({
+      label: 'WhatsApp',
+      href: whatsappUrl.value,
+      icon: 'whatsapp',
+    });
+  }
+
+  return items;
+});
 </script>
 
 <template>
@@ -47,8 +67,8 @@ const floatingSocial = [
         <svg
           v-if="item.icon === 'instagram'"
           viewBox="0 0 24 24"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           fill="currentColor"
           aria-hidden="true"
         >
@@ -59,8 +79,8 @@ const floatingSocial = [
         <svg
           v-else-if="item.icon === 'facebook'"
           viewBox="0 0 24 24"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           fill="currentColor"
           aria-hidden="true"
         >
@@ -71,8 +91,8 @@ const floatingSocial = [
         <svg
           v-else
           viewBox="0 0 24 24"
-          width="16"
-          height="16"
+          width="18"
+          height="18"
           fill="currentColor"
           aria-hidden="true"
         >
@@ -93,16 +113,18 @@ const floatingSocial = [
 
 .floating-social {
   position: fixed;
-  right: 1rem;
-  bottom: 1.5rem;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
   z-index: 50;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 
   a {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 44px;
+    min-height: 44px;
     display: grid;
     place-items: center;
     background: var(--ma-charcoal);
@@ -111,16 +133,19 @@ const floatingSocial = [
     border-radius: 2px;
     transition: background 0.2s ease, color 0.2s ease;
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: var(--ma-gold);
       color: var(--ma-charcoal);
+      outline: none;
     }
   }
 }
 
 @media (max-width: 700px) {
   .floating-social {
-    display: none;
+    right: max(0.65rem, env(safe-area-inset-right));
+    bottom: max(0.85rem, env(safe-area-inset-bottom));
   }
 }
 </style>
