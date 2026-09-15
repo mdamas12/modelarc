@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Token Bearer auth for SPA admin/web — do not enable statefulApi()
         // (that forces CSRF/session cookies and breaks login with 419).
+        // Trust reverse proxies (nginx) so Request::ip() is correct for Meta CAPI.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

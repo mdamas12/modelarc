@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
+import ConsentBanner from '@/components/common/ConsentBanner.vue';
 import SiteFooter from '@/components/common/SiteFooter.vue';
 import SiteHeader from '@/components/common/SiteHeader.vue';
+import { trackContact } from '@/services/metaPixel';
 import { useHomeStore } from '@/stores/homeStore';
 import { buildWhatsAppUrl } from '@/utils/whatsapp';
 
@@ -9,7 +11,20 @@ const home = useHomeStore();
 
 onMounted(() => {
   if (!home.loaded) void home.loadHome();
+  document.addEventListener('click', onDocumentContactClick, true);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentContactClick, true);
+});
+
+function onDocumentContactClick(event: MouseEvent) {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const anchor = target.closest('a[href^="tel:"]');
+  if (!anchor) return;
+  trackContact({ method: 'phone', placement: 'other' });
+}
 
 const whatsappUrl = computed(() =>
   buildWhatsAppUrl(home.settings.whatsapp_phone, home.settings.whatsapp_message),
@@ -39,6 +54,12 @@ const floatingSocial = computed(() => {
 
   return items;
 });
+
+function onFloatingClick(icon: string) {
+  if (icon === 'whatsapp') {
+    trackContact({ method: 'whatsapp', placement: 'floating' });
+  }
+}
 </script>
 
 <template>
@@ -54,6 +75,7 @@ const floatingSocial = computed(() => {
     </q-page-container>
 
     <SiteFooter />
+    <ConsentBanner />
 
     <aside class="floating-social" aria-label="Redes sociales">
       <a
@@ -63,6 +85,7 @@ const floatingSocial = computed(() => {
         :aria-label="item.label"
         target="_blank"
         rel="noopener noreferrer"
+        @click="onFloatingClick(item.icon)"
       >
         <svg
           v-if="item.icon === 'instagram'"

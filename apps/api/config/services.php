@@ -41,4 +41,22 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Meta Pixel + Conversions API
+    |--------------------------------------------------------------------------
+    |
+    | Pixel ID is public. Access token is server-only — never expose to SPA,
+    | site_settings, admin UI, docs, or tests as a real secret value.
+    |
+    */
+    'meta' => [
+        'pixel_id' => env('META_PIXEL_ID', ''),
+        'access_token' => env('META_CONVERSIONS_API_TOKEN', ''),
+        'pixel_enabled' => filter_var(env('META_PIXEL_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'conversions_enabled' => filter_var(env('META_CONVERSIONS_API_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'test_event_code' => env('META_TEST_EVENT_CODE', ''),
+        'graph_api_version' => env('META_GRAPH_API_VERSION', 'v21.0'),
+    ],
+
 ];

@@ -13,6 +13,7 @@ import {
   getStatesOfCountry,
 } from '@/data/locations';
 import { submitContact } from '@/services/contactApi';
+import { trackContact, trackLead } from '@/services/metaPixel';
 import { useHomeStore } from '@/stores/homeStore';
 import type { ContactPayload } from '@/types/models';
 import { buildWhatsAppUrl, formatWhatsAppDisplay } from '@/utils/whatsapp';
@@ -170,7 +171,14 @@ async function onSubmit() {
   }
   sending.value = true;
   try {
-    const result = await submitContact({ ...form });
+    const snapshot = { ...form };
+    const result = await submitContact(snapshot);
+    trackLead({
+      eventId: result.metaEventId,
+      service: snapshot.service,
+      budgetRange: snapshot.budget_range,
+      country: snapshot.country,
+    });
     $q.notify({ type: 'positive', message: result.message, color: 'primary', textColor: 'dark' });
     form.name = '';
     form.email = '';
@@ -189,6 +197,10 @@ async function onSubmit() {
   } finally {
     sending.value = false;
   }
+}
+
+function onWhatsAppContact(placement: 'contact_page' | 'contact_social') {
+  trackContact({ method: 'whatsapp', placement });
 }
 </script>
 
@@ -311,7 +323,12 @@ async function onSubmit() {
           </p>
           <p v-if="whatsappUrl && whatsappDisplay" class="contact-aside__row">
             <q-icon name="phone" size="20px" aria-hidden="true" />
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer">
+            <a
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="onWhatsAppContact('contact_page')"
+            >
               {{ whatsappDisplay }}
             </a>
           </p>
@@ -333,6 +350,7 @@ async function onSubmit() {
                 :aria-label="item.label"
                 target="_blank"
                 rel="noopener noreferrer"
+                @click="item.icon === 'whatsapp' ? onWhatsAppContact('contact_social') : undefined"
               >
                 <svg
                   v-if="item.icon === 'instagram'"

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { fetchFooterGallery, type GalleryImage } from '@/services/galleryApi';
+import { trackContact } from '@/services/metaPixel';
+import { useConsentStore } from '@/stores/consentStore';
 import { useHomeStore } from '@/stores/homeStore';
 import { buildWhatsAppUrl, formatWhatsAppDisplay } from '@/utils/whatsapp';
 
 const year = new Date().getFullYear();
 const home = useHomeStore();
-
+const consent = useConsentStore();
 const links = [
   { label: 'Inicio', to: '/' },
   { label: 'Nosotros', to: '/nosotros' },
@@ -77,6 +79,14 @@ function nextImage() {
   lightboxIndex.value = (lightboxIndex.value + 1) % galleryImages.value.length;
 }
 
+function onWhatsAppClick() {
+  trackContact({ method: 'whatsapp', placement: 'footer' });
+}
+
+function openCookiePrefs() {
+  consent.openPreferences();
+}
+
 onMounted(async () => {
   if (!home.loaded) void home.loadHome();
   try {
@@ -135,7 +145,12 @@ onMounted(async () => {
                 />
               </svg>
             </span>
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer">
+            <a
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="onWhatsAppClick"
+            >
               {{ whatsappDisplay }}
             </a>
           </li>
@@ -148,6 +163,7 @@ onMounted(async () => {
             :aria-label="item.label"
             target="_blank"
             rel="noopener noreferrer"
+            @click="item.icon === 'whatsapp' ? onWhatsAppClick() : undefined"
           >
             <svg
               v-if="item.icon === 'instagram'"
@@ -208,6 +224,9 @@ onMounted(async () => {
       <div class="site-footer__copy">
         <p>© {{ year }} Modelarc. Todos los derechos reservados.</p>
         <p class="site-footer__credit">Desarrollado por MDevUp</p>
+        <button type="button" class="site-footer__privacy" @click="openCookiePrefs">
+          Cookies y privacidad
+        </button>
       </div>
     </div>
 
@@ -382,6 +401,19 @@ onMounted(async () => {
   &__credit {
     margin-top: 0.35rem !important;
     color: rgba(247, 244, 240, 0.55);
+  }
+
+  &__privacy {
+    margin-top: 0.55rem;
+    display: inline-block;
+    background: none;
+    border: none;
+    color: var(--ma-gold);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    padding: 0;
   }
 
   &__social {
